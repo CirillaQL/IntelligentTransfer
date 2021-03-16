@@ -1,0 +1,7 @@
+mysql:
+  host: 152.136.106.67
+  user: root
+  password: 123456
+
+log:
+  logFilePath: /logs/

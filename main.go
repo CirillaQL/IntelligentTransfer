@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"IntelligentTransfer/pkg/log"
+	"github.com/gin-gonic/gin"
+)
 
-func main(){
-	fmt.Println("Hello,World")
+func main() {
+	router := gin.Default()
+	router.Use(log.GinLoggerToFile())
+
+	router.Run()
 }
