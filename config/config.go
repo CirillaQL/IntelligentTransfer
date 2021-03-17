@@ -1,45 +1,33 @@
 package config
 
 import (
-	"github.com/sirupsen/logrus"
+	"fmt"
 	"github.com/spf13/viper"
 	"sync"
 )
 
 // 配置文件
-var file *viper.Viper
-
+var cfg *viper.Viper
 var once sync.Once
 
 // 初始化配置文件：本地读取config.yaml
 func initCfg() {
 	once.Do(func() {
-		logger := logrus.WithFields(map[string]interface{}{
-			"file": "config",
-		})
-		file = viper.New()
-		file.SetConfigName("config") // name of config file (without extension)
-		file.AddConfigPath("config/")
-		file.SetConfigType("yaml")
-		err := file.ReadInConfig()
+		cfg = viper.New()
+		cfg.SetConfigName("config")
+		cfg.AddConfigPath("config/")
+		cfg.SetConfigType("yaml")
+		err := cfg.ReadInConfig()
 		if err != nil {
-			logger.Error(err)
+			panic(fmt.Errorf("config getConfig failed"))
 		}
 	})
 }
 
 // 从文件读取配置
-func GetFile() *viper.Viper {
-	if file == nil {
+func GetConfig() *viper.Viper {
+	if cfg == nil {
 		initCfg()
 	}
-	return file
-}
-
-// 根据key获取根节点配置信息
-func GetConfig(key string) interface{} {
-	if file == nil {
-		initCfg()
-	}
-	return file.Get(key)
+	return cfg
 }

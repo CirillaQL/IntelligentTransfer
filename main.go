@@ -1,13 +1,12 @@
 package main
 
 import (
-	"IntelligentTransfer/pkg/log"
+	"IntelligentTransfer/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	router := gin.Default()
-	router.Use(log.GinLoggerToFile())
-
+	router.Use(middleware.GinLogger())
 	router.Run()
 }

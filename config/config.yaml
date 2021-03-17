@@ -1,7 +1,9 @@
+env: debug
+
 mysql:
-  host: 152.136.106.67
+  host: 127.0.0.1
   user: root
   password: 123456
 
 log:
-  logFilePath: /logs/
+  log_path: ./logs/
