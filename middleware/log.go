@@ -25,7 +25,7 @@ func GinLogger() gin.HandlerFunc {
 		// 请求IP
 		clientIP := c.ClientIP()
 		//日志格式
-		logger.ZapLogger.Sugar().Infof("| %3d | %8v | %10s | %s | %s |",
+		logger.Debugf("| %3d | %8v | %10s | %s | %s |",
 			statusCode,
 			latencyTime,
 			clientIP,

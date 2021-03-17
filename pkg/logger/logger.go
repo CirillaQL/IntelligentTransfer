@@ -18,7 +18,7 @@ func init() {
 	now := time.Now()
 	logPath := config.GetConfig().GetString("log.log_path")
 	hook := lumberjack.Logger{
-		Filename:   fmt.Sprintf(logPath+"%04d"+"%02d"+"%02d.log", now.Year(), now.Month(), now.Day()), //filePath
+		Filename:   fmt.Sprintf(logPath+"%04d-"+"%02d-"+"%02d.log", now.Year(), now.Month(), now.Day()),
 		MaxSize:    128,
 		MaxAge:     7,
 		MaxBackups: 30,
@@ -56,4 +56,29 @@ func init() {
 	// 构造日志
 	ZapLogger = zap.New(core, caller, development)
 	ZapLogger.Info("log 初始化成功")
+}
+
+//封装Sugar print方法
+func Debugf(format string, v ...interface{}) {
+	ZapLogger.Sugar().Debugf(format, v...)
+}
+
+func Infof(format string, v ...interface{}) {
+	ZapLogger.Sugar().Infof(format, v...)
+}
+
+func Errorf(format string, v ...interface{}) {
+	ZapLogger.Sugar().Errorf(format, v...)
+}
+
+func Debug(args ...interface{}) {
+	ZapLogger.Sugar().Debug(args...)
+}
+
+func Info(args ...interface{}) {
+	ZapLogger.Sugar().Info(args...)
+}
+
+func Error(args ...interface{}) {
+	ZapLogger.Sugar().Error(args...)
 }
