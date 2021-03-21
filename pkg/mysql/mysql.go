@@ -11,6 +11,7 @@ import (
 var db *gorm.DB
 var once sync.Once
 
+//初始化DB连接
 func initDB() {
 	once.Do(func() {
 		var err error
