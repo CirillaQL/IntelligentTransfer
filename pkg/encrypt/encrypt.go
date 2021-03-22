@@ -4,30 +4,59 @@
 package encrypt
 
 import (
-	"IntelligentTransfer/pkg/logger"
-	"fmt"
-	"golang.org/x/crypto/bcrypt"
+	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
+	"encoding/hex"
 )
 
-//加密
-func Encrypt(input string) (string, error) {
-	if input == "" {
-		logger.Error("encrypt input is empty")
-		return "", fmt.Errorf("encrypt input is empty")
-	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(input), bcrypt.DefaultCost)
-	if err != nil {
-		logger.Errorf("generate failed err: %+v", err)
-		return "", err
-	}
-	return string(hash), nil
+func PKCS7Padding(ciphertext []byte, blockSize int) []byte {
+	padding := blockSize - len(ciphertext)%blockSize
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(ciphertext, padtext...)
 }
 
-//判断是否相等
-func CheckEncryptString(origin, encryption string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(encryption), []byte(origin))
+func PKCS7UnPadding(origData []byte) []byte {
+	length := len(origData)
+	unpadding := int(origData[length-1])
+	return origData[:(length - unpadding)]
+}
+
+//AesEncrypt 加密函数
+func AesEncrypt(input string) (string, error) {
+	key, _ := hex.DecodeString("6368616e676520746869732070617373")
+	plaintext := []byte(input)
+	c := make([]byte, aes.BlockSize+len(plaintext))
+	iv := c[:aes.BlockSize]
+	block, err := aes.NewCipher(key)
 	if err != nil {
-		return false
+		return "", err
 	}
-	return true
+	blockSize := block.BlockSize()
+	plaintext = PKCS7Padding(plaintext, blockSize)
+	blockMode := cipher.NewCBCEncrypter(block, iv)
+	crypted := make([]byte, len(plaintext))
+	blockMode.CryptBlocks(crypted, plaintext)
+	result := base64.StdEncoding.EncodeToString(crypted)
+	return result, nil
+}
+
+// AesDecrypt 解密函数
+func AesDecrypt(input string) (string, error) {
+	key, _ := hex.DecodeString("6368616e676520746869732070617373")
+	//1.base64解密input
+	decodeed, err := base64.StdEncoding.DecodeString(input)
+	c := make([]byte, aes.BlockSize+len(decodeed))
+	iv := c[:aes.BlockSize]
+	if err != nil {
+		return "", err
+	}
+	block, err := aes.NewCipher(key)
+	blockSize := block.BlockSize()
+	blockMode := cipher.NewCBCDecrypter(block, iv[:blockSize])
+	origData := make([]byte, len(decodeed))
+	blockMode.CryptBlocks(origData, decodeed)
+	origData = PKCS7UnPadding(origData)
+	return string(origData), nil
 }

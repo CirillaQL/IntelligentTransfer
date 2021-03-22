@@ -12,5 +12,5 @@ type User struct {
 	Province string `gorm:"column:province"`  //用户所在省份
 	City     string `gorm:"column:city"`      //用户所在城市
 	Address  string `gorm:"column:address"`   //用户详细地址
-	Company  string `gorm:"column:"`
+	Company  string `gorm:"column:company"`   //用户公司名称
 }

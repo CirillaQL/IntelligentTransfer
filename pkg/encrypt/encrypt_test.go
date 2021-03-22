@@ -5,22 +5,13 @@ import (
 	"testing"
 )
 
-func TestEncrypt(t *testing.T) {
-	ans, err := Encrypt("sdjisoad")
-	if err != nil {
-		t.Error(err)
-	}
-	fmt.Println(ans)
-}
+func TestAesEncrypt(t *testing.T) {
 
-func TestCheckEncryptString(t *testing.T) {
-	passwordOld := "test if pass"
-	passwordNex, err := Encrypt(passwordOld)
+	plaintext := "hello ming"
+
+	ans, err := AesEncrypt(plaintext)
 	if err != nil {
 		t.Error(err)
 	}
-	ans := CheckEncryptString(passwordOld, passwordNex)
-	if ans == false {
-		t.Error("wrong answer")
-	}
+	fmt.Println(AesDecrypt(ans))
 }

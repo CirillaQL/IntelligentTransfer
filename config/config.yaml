@@ -6,5 +6,11 @@ mysql:
   password: 123456
   db: SmartAPP
 
+redis:
+  address: 127.0.0.1:6379
+  maxIdle: 5
+  maxActive: 0
+  idleTimeOut: 10
+
 log:
   log_path: ./logs/
