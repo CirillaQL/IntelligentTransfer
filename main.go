@@ -1,36 +1,32 @@
 package main
 
 import (
-	"IntelligentTransfer/pkg/logger"
-	"github.com/gin-gonic/gin"
-	"net/http"
+	"IntelligentTransfer/service"
+	"fmt"
 )
 
-func Cors() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		method := c.Request.Method
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token,X-Token,X-User-Id")
-		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS,DELETE,PUT")
-		c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
-		c.Header("Access-Control-Allow-Credentials", "true")
-
-		// 放行所有OPTIONS方法
-		if method == "OPTIONS" {
-			c.AbortWithStatus(http.StatusNoContent)
-		}
-		// 处理请求
-		c.Next()
-	}
-}
-
 func main() {
-	r := gin.Default()
-	r.Use(Cors())
-	r.POST("/login", func(context *gin.Context) {
-		json := make(map[string]interface{})
-		_ = context.BindJSON(&json)
-		logger.ZapLogger.Info(json["password"].(string))
-	})
-	_ = r.Run(":8090")
+	//r := gin.Default()
+	//r.Use(middleware.Cors())
+	//r.POST("/login", func(context *gin.Context) {
+	//	json := make(map[string]interface{})
+	//	_ = context.BindJSON(&json)
+	//	logger.ZapLogger.Info(json["password"].(string))
+	//})
+	//_ = r.Run(":8090")
+	//
+	json := make(map[string]interface{})
+	json["user_name"] = "dsd"
+	json["nick_name"] = "cscd"
+	json["sex"] = "男"
+	json["province"] = "辽宁省"
+	json["city"] = "大连市"
+	json["address"] = "哦你的承诺"
+	json["company"] = "腾讯"
+	json["phone_number"] = "15840613358"
+	json["email"] = "1194946223@qq.com"
+	json["password"] = "ql1194946223"
+	json["id_card"] = "210204199906135355"
+	//service.Register(json)
+	fmt.Println(service.LoginWithPassword("1194946223@qq.com", "ql1194946223", 2))
 }
