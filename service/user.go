@@ -5,6 +5,7 @@ import (
 	"IntelligentTransfer/pkg/encrypt"
 	"IntelligentTransfer/pkg/logger"
 	"IntelligentTransfer/pkg/mysql"
+	"fmt"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -16,9 +17,11 @@ func generateUUID() string {
 // Register 用户注册服务，根据前端传入的json数据进行拼装后保存到数据库
 func Register(json map[string]interface{}) (string, error) {
 	//1.解析json，拼装成User结构体
-	User := assembleUser(json)
+	User, err := assembleUser(json)
+	if err != nil {
+		return "", err
+	}
 	//对User敏感信息进行加密
-	var err error
 	User.Address, err = encrypt.AesEncrypt(User.Address)
 	if err != nil {
 		logger.Errorf("User Register failed. User's Address can't encrypt: %+v", err)
@@ -58,6 +61,7 @@ func Register(json map[string]interface{}) (string, error) {
 	//保存到DB
 	db := mysql.GetDB()
 	db.Create(&User)
+	logger.Infof("user:{%+v} register success", User)
 	return User.UUID, nil
 }
 
@@ -114,26 +118,47 @@ func LoginWithPassword(userInfo, password string, inputType uint32) (bool, error
 }
 
 //拼装User结构体
-func assembleUser(json map[string]interface{}) *module.User {
+func assembleUser(json map[string]interface{}) (*module.User, error) {
 	User := &module.User{}
 	uuid := generateUUID()
-	userName := json["user_name"].(string)
-	nickName := json["nick_name"].(string)
+	//首先检出输入的选择
+	err := validateRegister(json)
+	if err != nil {
+		return nil, err
+	}
+	userName := json["username"].(string)
+	var nickName string
+	if json["nickname"] == nil {
+		nickName = ""
+	} else {
+		nickName = json["nickname"].(string)
+	}
 	sex := json["sex"].(string)
-	province := json["province"].(string)
-	city := json["city"].(string)
 	address := json["address"].(string)
 	company := json["company"].(string)
-	phoneNumber := json["phone_number"].(string)
-	email := json["email"].(string)
-	password := json["password"].(string)
-	idCard := json["id_card"].(string)
+	phoneNumber := json["phoneNumber"].(string)
+	var email string
+	if json["email"] == nil {
+		email = ""
+	} else {
+		email = json["email"].(string)
+	}
+	var password string
+	if json["password"] == nil {
+		password = ""
+	} else {
+		password = json["password"].(string)
+	}
+	var idCard string
+	if json["idCard"] == nil {
+		idCard = ""
+	} else {
+		idCard = json["idCard"].(string)
+	}
 	User.UUID = uuid
 	User.UserName = userName
 	User.NickName = nickName
 	User.Sex = sex
-	User.Province = province
-	User.City = city
 	User.Address = address
 	User.Company = company
 	User.PhoneNumber = phoneNumber
@@ -141,5 +166,30 @@ func assembleUser(json map[string]interface{}) *module.User {
 	User.Password = password
 	User.IDCard = idCard
 	User.IfVip = 0
-	return User
+	return User, nil
+}
+
+//校验输入的注册参数是否正常
+func validateRegister(json map[string]interface{}) error {
+	if json["username"] == nil {
+		logger.Errorf("user register failed username is nil")
+		return fmt.Errorf("username is nil")
+	}
+	if json["sex"] == nil {
+		logger.Errorf("user register failed user's sex is nil")
+		return fmt.Errorf("user's sex is nil")
+	}
+	if json["address"] == nil {
+		logger.Errorf("user register failed user's address is nil")
+		return fmt.Errorf("user's address is nil")
+	}
+	if json["company"] == nil {
+		logger.Errorf("user register failed user's company is nil")
+		return fmt.Errorf("user's company is nil")
+	}
+	if json["phoneNumber"] == nil {
+		logger.Errorf("user register failed user's phoneNumber is nil")
+		return fmt.Errorf("user's phoneNumber is nil")
+	}
+	return nil
 }
