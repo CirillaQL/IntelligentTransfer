@@ -1,6 +1,7 @@
 package token
 
 import (
+	"fmt"
 	jwt "github.com/dgrijalva/jwt-go"
 	"time"
 )
@@ -30,3 +31,16 @@ func GenToken(UUid, PhoneNumber string) (string, error) {
 }
 
 // ParseToken 解析Token
+func ParseToken(tokenString string) (*MyClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &MyClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: ")
+		}
+		return []byte(MySecret), nil
+	})
+	if claims, ok := token.Claims.(*MyClaims); ok && token.Valid {
+		return claims, nil
+	} else {
+		return nil, err
+	}
+}
