@@ -34,24 +34,24 @@ type Driver struct {
 }
 
 // Meeting 会议DB-Module
-type Meeting struct {
-	ID              int       //主键id
-	UUid            string    //对应的会议信息
-	UserId          string    //参加会议人员的用户id
-	UserName        string    //用户姓名
-	UserPhoneNumber string    //用户电话号码
-	OrganiserId     string    //组织者的用户id
-	OrganiserName   string    //组织者的姓名
-	IfOrganiser     int       //是否为主办人
-	IfParticipant   int       //是否为讲师等重要参会人
-	Status          int       //审批状态
-	LeaveTime       time.Time //去程时间
-	LeaveFromCity   string    //去程城市
-	LeaveToCity     string    //到达城市
-	BackTime        time.Time //返程时间
-	BackFromCity    string    //返程城市
-	BackToCity      string    //返程到达城市
-}
+//type Meeting struct {
+//	ID              int       //主键id
+//	UUid            string    //对应的会议信息
+//	MeetingName     string    //会议的名称
+//	UserId          string    //参加会议人员的用户id
+//	UserName        string    //用户姓名
+//	UserPhoneNumber string    //用户电话号码
+//	OrganiserId     string    //组织者的用户id
+//	OrganiserName   string    //组织者的姓名
+//	IfOrganiser     int       //是否为主办人
+//	IfParticipant   int       //是否为讲师等重要参会人
+//	LeaveTime       time.Time //去程时间
+//	LeaveFromCity   string    //去程城市
+//	LeaveToCity     string    //到达城市
+//	BackTime        time.Time //返程时间
+//	BackFromCity    string    //返程城市
+//	BackToCity      string    //返程到达城市
+//}
 
 // SmartMeeting 根据时间划分的会议信息的DB-Module
 type SmartMeeting struct {
@@ -78,4 +78,26 @@ type Order struct {
 	FromAddress string  //出发地
 	ToAddress   string  //目的地
 	Price       float64 //车费
+}
+
+// MeetingInfo 从Excel表中获得的数据对应的结构体
+type Meeting struct {
+	ID               int
+	MeetingName      string    //会议的名称
+	Name             string    //用户的姓名
+	Level            uint32    //用户级别
+	Company          string    //用户所属的机构
+	Sex              string    //用户性别
+	IdCard           string    //身份证号码
+	PhoneNumber      string    //手机号码
+	IfOrderHotel     uint32    //是否订购酒店
+	IfOrderPlane     uint32    //是否订购机票
+	ToTime           time.Time //用户的出发时间
+	ToBeginAddress   string    //用户的出发地点
+	ToEndAddress     string    //用户到达的地方地点
+	ToShift          string    //去程航班信息
+	FromTime         time.Time //用户的回程出发时间
+	FromBeginAddress string    //用户的回城出发地点
+	FromEndAddress   string    //用户回程到达的地方地点
+	FromShift        string    //回程航班信息
 }

@@ -24,44 +24,44 @@ func Register(json map[string]interface{}) (string, error) {
 	//对User敏感信息进行加密
 	User.Address, err = encrypt.AesEncrypt(User.Address)
 	if err != nil {
-		logger.Errorf("User Register failed. User's Address can't encrypt: %+v", err)
+		logger.ZapLogger.Sugar().Errorf("User Register failed. User's Address can't encrypt: %+v", err)
 		return "", err
 	}
 	User.PhoneNumber, err = encrypt.AesEncrypt(User.PhoneNumber)
 	if err != nil {
-		logger.Errorf("User Register failed. User's PhoneNumber can't encrypt: %+v", err)
+		logger.ZapLogger.Sugar().Errorf("User Register failed. User's PhoneNumber can't encrypt: %+v", err)
 		return "", err
 	}
 	User.Company, err = encrypt.AesEncrypt(User.Company)
 	if err != nil {
-		logger.Errorf("User Register failed. User's Company can't encrypt: %+v", err)
+		logger.ZapLogger.Sugar().Errorf("User Register failed. User's Company can't encrypt: %+v", err)
 		return "", err
 	}
 	if User.Email != "" {
 		User.Email, err = encrypt.AesEncrypt(User.Email)
 		if err != nil {
-			logger.Errorf("User Register failed. User's Email can't encrypt: %+v", err)
+			logger.ZapLogger.Sugar().Errorf("User Register failed. User's Email can't encrypt: %+v", err)
 			return "", err
 		}
 	}
 	if User.Password != "" {
 		User.Password, err = encrypt.AesEncrypt(User.Password)
 		if err != nil {
-			logger.Errorf("User Register failed. User's Password can't encrypt: %+v", err)
+			logger.ZapLogger.Sugar().Errorf("User Register failed. User's Password can't encrypt: %+v", err)
 			return "", err
 		}
 	}
 	if User.IDCard != "" {
 		User.IDCard, err = encrypt.AesEncrypt(User.IDCard)
 		if err != nil {
-			logger.Errorf("User Register failed. User's IDCard can't encrypt: %+v", err)
+			logger.ZapLogger.Sugar().Errorf("User Register failed. User's IDCard can't encrypt: %+v", err)
 			return "", err
 		}
 	}
 	//保存到DB
 	db := mysql.GetDB()
 	db.Create(&User)
-	logger.Infof("user:{%+v} register success", User)
+	logger.ZapLogger.Sugar().Infof("user:{%+v} register success", User)
 	return User.UUID, nil
 }
 
@@ -74,7 +74,7 @@ func LoginWithPassword(userInfo, password string, inputType uint32) (bool, strin
 		user := module.User{}
 		phoneNumberEncrypt, err := encrypt.AesEncrypt(userInfo)
 		if err != nil {
-			logger.Errorf("User Login failed. User's PhoneNumber can't encrypt: %+v", err)
+			logger.ZapLogger.Sugar().Errorf("User Login failed. User's PhoneNumber can't encrypt: %+v", err)
 			return false, "", err
 		}
 		db.Where("phone_number = ?", phoneNumberEncrypt).Find(&user)
@@ -83,7 +83,7 @@ func LoginWithPassword(userInfo, password string, inputType uint32) (bool, strin
 		}
 		passwordDecrypt, err := encrypt.AesDecrypt(user.Password)
 		if err != nil {
-			logger.Errorf("User Login failed. User's Password can't decrypt: %+v", err)
+			logger.ZapLogger.Sugar().Errorf("User Login failed. User's Password can't decrypt: %+v", err)
 			return false, "", err
 		}
 		if password == passwordDecrypt {
@@ -95,7 +95,7 @@ func LoginWithPassword(userInfo, password string, inputType uint32) (bool, strin
 		user := module.User{}
 		emailEncrypt, err := encrypt.AesEncrypt(userInfo)
 		if err != nil {
-			logger.Errorf("User Login failed. User's Email can't encrypt: %+v", err)
+			logger.ZapLogger.Sugar().Errorf("User Login failed. User's Email can't encrypt: %+v", err)
 			return false, "", err
 		}
 		db.Where("email = ?", emailEncrypt).Find(&user)
@@ -104,7 +104,7 @@ func LoginWithPassword(userInfo, password string, inputType uint32) (bool, strin
 		}
 		passwordDecrypt, err := encrypt.AesDecrypt(user.Password)
 		if err != nil {
-			logger.Errorf("User Login failed. User's Password can't decrypt: %+v", err)
+			logger.ZapLogger.Sugar().Errorf("User Login failed. User's Password can't decrypt: %+v", err)
 			return false, "", err
 		}
 		if password == passwordDecrypt {

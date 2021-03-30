@@ -14,7 +14,7 @@ func Register(context *gin.Context) {
 	_ = context.BindJSON(&json)
 	UUid, err := service.Register(json)
 	if err != nil {
-		logger.Errorf("Register user failed userInfo{%+v} err{%+v}", json, err)
+		logger.ZapLogger.Sugar().Errorf("Register user failed userInfo{%+v} err{%+v}", json, err)
 		context.JSON(http.StatusOK, gin.H{"msg": "注册失败", "userId": "", "error": err.Error()})
 	} else {
 		context.JSON(http.StatusOK, gin.H{"msg": "登录成功", "userId": UUid})
@@ -28,10 +28,10 @@ func Login(context *gin.Context) {
 	userInfo, password, inputType := loginJson(json)
 	result, userId, err := service.LoginWithPassword(userInfo, password, inputType)
 	if err != nil || result == false {
-		logger.Errorf("user login failed err:%+v", err)
+		logger.ZapLogger.Sugar().Errorf("user login failed err:%+v", err)
 		context.JSON(http.StatusOK, gin.H{"msg": "登录失败"})
 	} else {
-		logger.Info("user login success")
+		logger.ZapLogger.Sugar().Info("user login success")
 		tokenString, _ := token.GenToken(userInfo, password)
 		context.JSON(http.StatusOK, gin.H{"msg": "登录成功", "token": tokenString, "userId": userId})
 	}

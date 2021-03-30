@@ -14,7 +14,7 @@ var once sync.Once
 // 初始化Redis池
 func initRedis() {
 	once.Do(func() {
-		logger.Info("begin init redis")
+		logger.ZapLogger.Sugar().Info("begin init redis")
 		redisConfig := config.GetConfig().Sub("redis")
 		pool = &redis.Pool{
 			MaxIdle:     redisConfig.GetInt("maxIdle"),
@@ -28,13 +28,13 @@ func initRedis() {
 					redis.DialWriteTimeout(time.Duration(redisConfig.GetInt64("write_timeout"))*time.Second),
 				)
 				if err != nil {
-					logger.Errorf("redis init failed err: %+v", err)
+					logger.ZapLogger.Sugar().Errorf("redis init failed err: %+v", err)
 					return nil, err
 				}
 				return con, nil
 			},
 		}
-		logger.Info("init redis success")
+		logger.ZapLogger.Sugar().Info("init redis success")
 	})
 }
 
