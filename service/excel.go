@@ -51,47 +51,43 @@ func GetMeeting(SheetName, fileName string, errorChannel chan error, wg *sync.Wa
 			fileName, SheetName, err)
 		errorChannel <- err
 	}
-	for index, row := range rows {
-		if index == 0 {
-			continue
-		}
-		err := SaveMeetingInfo(row, SheetName)
-		if err != nil {
-			errorChannel <- err
-		}
-	}
+
+	meetingList := getMeetingsInfo(rows, SheetName)
+	db := mysql.GetDB()
+	db.Create(&meetingList)
 }
 
-//从channel读取的值进行保存
-func SaveMeetingInfo(meetingRow []string, meetingName string) error {
-	//基础判断  模板表中有16列
-	if len(meetingRow) != 16 {
-		logger.ZapLogger.Sugar().Errorf("Excel SheetName:{%+v} has wrong column", meetingName)
-		return fmt.Errorf("excel SheetName:{%+v} is not template", meetingName)
+// getMeetingsInfo 从Excel表中获取所有的数据并保存
+func getMeetingsInfo(rows [][]string, meetingName string) []*module.Meeting {
+	var result []*module.Meeting
+	for index, meetingRow := range rows {
+		if index == 0 {
+			continue
+		} else {
+			MeetingInfo := module.Meeting{}
+			MeetingInfo.MeetingName = meetingName
+			MeetingInfo.Name = meetingRow[0]
+			MeetingInfo.Level = getUserLevel(meetingRow[1])
+			MeetingInfo.Company = meetingRow[2]
+			MeetingInfo.Sex = meetingRow[3]
+			MeetingInfo.IdCard = meetingRow[4]
+			MeetingInfo.PhoneNumber = meetingRow[5]
+			MeetingInfo.IfOrderHotel = getIfOrder(meetingRow[6])
+			MeetingInfo.IfOrderPlane = getIfOrder(meetingRow[7])
+			ToTime, _ := time.ParseInLocation("2006-01-02 15:04", meetingRow[8], time.Local)
+			MeetingInfo.ToTime = ToTime
+			MeetingInfo.ToBeginAddress = meetingRow[9]
+			MeetingInfo.ToEndAddress = meetingRow[10]
+			MeetingInfo.ToShift = meetingRow[11]
+			FromTime, _ := time.ParseInLocation("2006-01-02 15:04", meetingRow[12], time.Local)
+			MeetingInfo.FromTime = FromTime
+			MeetingInfo.FromBeginAddress = meetingRow[13]
+			MeetingInfo.FromEndAddress = meetingRow[14]
+			MeetingInfo.FromShift = meetingRow[15]
+			result = append(result, &MeetingInfo)
+		}
 	}
-	MeetingInfo := module.Meeting{}
-	MeetingInfo.MeetingName = meetingName
-	MeetingInfo.Name = meetingRow[0]
-	MeetingInfo.Level = getUserLevel(meetingRow[1])
-	MeetingInfo.Company = meetingRow[2]
-	MeetingInfo.Sex = meetingRow[3]
-	MeetingInfo.IdCard = meetingRow[4]
-	MeetingInfo.PhoneNumber = meetingRow[5]
-	MeetingInfo.IfOrderHotel = getIfOrder(meetingRow[6])
-	MeetingInfo.IfOrderPlane = getIfOrder(meetingRow[7])
-	ToTime, _ := time.ParseInLocation("2006-01-02 15:04", meetingRow[8], time.Local)
-	MeetingInfo.ToTime = ToTime
-	MeetingInfo.ToBeginAddress = meetingRow[9]
-	MeetingInfo.ToEndAddress = meetingRow[10]
-	MeetingInfo.ToShift = meetingRow[11]
-	FromTime, _ := time.ParseInLocation("2006-01-02 15:04", meetingRow[12], time.Local)
-	MeetingInfo.FromTime = FromTime
-	MeetingInfo.FromBeginAddress = meetingRow[13]
-	MeetingInfo.FromEndAddress = meetingRow[14]
-	MeetingInfo.FromShift = meetingRow[15]
-	db := mysql.GetDB()
-	db.Create(&MeetingInfo)
-	return nil
+	return result
 }
 
 //获取用户对应的等级

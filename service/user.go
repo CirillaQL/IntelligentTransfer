@@ -66,7 +66,7 @@ func Register(json map[string]interface{}) (string, error) {
 }
 
 // LoginWithPassword 用户登录服务，此接口为根据电话/邮箱和密码登录，验证码登录另写
-func LoginWithPassword(userInfo, password string, inputType uint32) (bool, string, error) {
+func LoginWithPassword(userInfo, password string, inputType uint32) (bool, string, string, error) {
 	//inputType为判断输入用户信息为电话或者邮箱，如果为电话，值为1，如果为邮箱，值为2
 	db := mysql.GetDB()
 	if inputType == 1 {
@@ -75,45 +75,45 @@ func LoginWithPassword(userInfo, password string, inputType uint32) (bool, strin
 		phoneNumberEncrypt, err := encrypt.AesEncrypt(userInfo)
 		if err != nil {
 			logger.ZapLogger.Sugar().Errorf("User Login failed. User's PhoneNumber can't encrypt: %+v", err)
-			return false, "", err
+			return false, "", "", err
 		}
 		db.Where("phone_number = ?", phoneNumberEncrypt).Find(&user)
 		if user.UUID == "" {
-			return false, "", nil
+			return false, "", "", nil
 		}
 		passwordDecrypt, err := encrypt.AesDecrypt(user.Password)
 		if err != nil {
 			logger.ZapLogger.Sugar().Errorf("User Login failed. User's Password can't decrypt: %+v", err)
-			return false, "", err
+			return false, "", "", err
 		}
 		if password == passwordDecrypt {
-			return true, user.UUID, nil
+			return true, user.UUID, user.PhoneNumber, nil
 		} else {
-			return false, "", nil
+			return false, "", "", nil
 		}
 	} else if inputType == 2 {
 		user := module.User{}
 		emailEncrypt, err := encrypt.AesEncrypt(userInfo)
 		if err != nil {
 			logger.ZapLogger.Sugar().Errorf("User Login failed. User's Email can't encrypt: %+v", err)
-			return false, "", err
+			return false, "", "", err
 		}
 		db.Where("email = ?", emailEncrypt).Find(&user)
 		if user.UUID == "" {
-			return false, "", nil
+			return false, "", "", nil
 		}
 		passwordDecrypt, err := encrypt.AesDecrypt(user.Password)
 		if err != nil {
 			logger.ZapLogger.Sugar().Errorf("User Login failed. User's Password can't decrypt: %+v", err)
-			return false, "", err
+			return false, "", "", err
 		}
 		if password == passwordDecrypt {
-			return true, user.UUID, nil
+			return true, user.UUID, user.PhoneNumber, nil
 		} else {
-			return false, "", nil
+			return false, "", "", nil
 		}
 	} else {
-		return false, "", nil
+		return false, "", "", nil
 	}
 }
 

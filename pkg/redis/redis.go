@@ -45,3 +45,30 @@ func GetRedisConn() redis.Conn {
 	}
 	return pool.Get()
 }
+
+// StoreToken 保存Token进入redis, token值为登录时生成的Token值，过期时间默认为Token的过期时间2个小时
+func StoreToken(token, userId string) error {
+	conn := GetRedisConn()
+	_, err := conn.Do("SET", token, userId)
+	if err != nil {
+		logger.ZapLogger.Sugar().Errorf("User: %+v store token into redis failed. err: %+v", userId, err)
+		return err
+	}
+	_, err = conn.Do("EXPIRE", token, 2*3600)
+	if err != nil {
+		logger.ZapLogger.Sugar().Errorf("User: %+v store token into redis failed. err: %+v", userId, err)
+		return err
+	}
+	return nil
+}
+
+// GetToken 从Redis中读取对应的信息
+func GetToken(token string) (string, error) {
+	conn := GetRedisConn()
+	result, err := redis.String(conn.Do("Get", token))
+	if err != nil {
+		logger.ZapLogger.Sugar().Errorf("get Token from redis failed Err:%+v", err)
+		return "", err
+	}
+	return result, nil
+}

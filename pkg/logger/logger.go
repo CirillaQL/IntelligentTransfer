@@ -58,6 +58,10 @@ func init() {
 	ZapLogger.Info("log 初始化成功")
 }
 
+func Log() *zap.Logger {
+	return ZapLogger
+}
+
 //封装Sugar print方法
 func Debugf(format string, v ...interface{}) {
 	ZapLogger.Sugar().Debugf(format, v...)

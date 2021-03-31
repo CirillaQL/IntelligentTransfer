@@ -2,9 +2,11 @@ package mysql
 
 import (
 	"IntelligentTransfer/config"
-	"IntelligentTransfer/pkg/logger"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
+	log "IntelligentTransfer/pkg/logger"
+	"gorm.io/driver/mysql"
+	_ "gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"sync"
 )
 
@@ -15,16 +17,19 @@ var once sync.Once
 func initDB() {
 	once.Do(func() {
 		var err error
-		logger.Info("begin init mysql db")
+		log.Info("begin init mysql db")
 		mysqlConfig := config.GetConfig().Sub("mysql")
 		user := mysqlConfig.GetString("user")
 		password := mysqlConfig.GetString("password")
 		url := mysqlConfig.GetString("host")
 		dbName := mysqlConfig.GetString("db")
-		connectSource := user + ":" + password + "@" + "(" + url + ")/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Local"
-		db, err = gorm.Open("mysql", connectSource)
+		connectSource := user + ":" + password + "@tcp" + "(" + url + ")/" + dbName + "?charset=utf8mb4&parseTime=True&loc=Local"
+		db, err = gorm.Open(mysql.Open(connectSource), &gorm.Config{
+			Logger:                 logger.Default.LogMode(logger.Silent),
+			SkipDefaultTransaction: true,
+		})
 		if err != nil {
-			logger.Errorf("init mysql db failed: %+v", err)
+			log.Errorf("init mysql db failed: %+v", err)
 			panic(err)
 		}
 	})

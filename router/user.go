@@ -2,6 +2,7 @@ package router
 
 import (
 	"IntelligentTransfer/pkg/logger"
+	"IntelligentTransfer/pkg/redis"
 	"IntelligentTransfer/pkg/token"
 	"IntelligentTransfer/service"
 	"github.com/gin-gonic/gin"
@@ -26,13 +27,22 @@ func Login(context *gin.Context) {
 	json := make(map[string]interface{})
 	_ = context.Bind(&json)
 	userInfo, password, inputType := loginJson(json)
-	result, userId, err := service.LoginWithPassword(userInfo, password, inputType)
+	result, userId, phoneNumber, err := service.LoginWithPassword(userInfo, password, inputType)
 	if err != nil || result == false {
 		logger.ZapLogger.Sugar().Errorf("user login failed err:%+v", err)
 		context.JSON(http.StatusOK, gin.H{"msg": "登录失败"})
 	} else {
 		logger.ZapLogger.Sugar().Info("user login success")
-		tokenString, _ := token.GenToken(userInfo, password)
+		tokenString, err := token.GenToken(userId, phoneNumber)
+		if err != nil {
+			logger.ZapLogger.Sugar().Errorf("User: %+v genToken Failed. Err: %+v", userId, err)
+			context.JSON(http.StatusOK, gin.H{"msg": "登录失败"})
+		}
+		err = redis.StoreToken(tokenString, userId)
+		if err != nil {
+			logger.ZapLogger.Sugar().Errorf("User: %+v storeToken Failed. Err: %+v", userId, err)
+			context.JSON(http.StatusOK, gin.H{"msg": "登录失败"})
+		}
 		context.JSON(http.StatusOK, gin.H{"msg": "登录成功", "token": tokenString, "userId": userId})
 	}
 }
