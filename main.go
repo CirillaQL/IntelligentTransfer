@@ -3,11 +3,14 @@ package main
 import (
 	"IntelligentTransfer/middleware"
 	"IntelligentTransfer/router"
+	"IntelligentTransfer/service"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	r := gin.Default()
+	go service.StartCron()
+	r := gin.New()
+	r.Use(gin.Recovery())
 	r.Use(middleware.Cors())
 	r.Use(middleware.GinLogger())
 
@@ -21,5 +24,4 @@ func main() {
 	}
 
 	_ = r.Run(":40000")
-
 }

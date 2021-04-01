@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"sync"
-	"time"
 )
 
 func OpenExcel(fileName string) []error {
@@ -51,7 +50,6 @@ func GetMeeting(SheetName, fileName string, errorChannel chan error, wg *sync.Wa
 			fileName, SheetName, err)
 		errorChannel <- err
 	}
-
 	meetingList := getMeetingsInfo(rows, SheetName)
 	db := mysql.GetDB()
 	db.Create(&meetingList)
@@ -64,27 +62,36 @@ func getMeetingsInfo(rows [][]string, meetingName string) []*module.Meeting {
 		if index == 0 {
 			continue
 		} else {
-			MeetingInfo := module.Meeting{}
-			MeetingInfo.MeetingName = meetingName
-			MeetingInfo.Name = meetingRow[0]
-			MeetingInfo.Level = getUserLevel(meetingRow[1])
-			MeetingInfo.Company = meetingRow[2]
-			MeetingInfo.Sex = meetingRow[3]
-			MeetingInfo.IdCard = meetingRow[4]
-			MeetingInfo.PhoneNumber = meetingRow[5]
-			MeetingInfo.IfOrderHotel = getIfOrder(meetingRow[6])
-			MeetingInfo.IfOrderPlane = getIfOrder(meetingRow[7])
-			ToTime, _ := time.ParseInLocation("2006-01-02 15:04", meetingRow[8], time.Local)
-			MeetingInfo.ToTime = ToTime
-			MeetingInfo.ToBeginAddress = meetingRow[9]
-			MeetingInfo.ToEndAddress = meetingRow[10]
-			MeetingInfo.ToShift = meetingRow[11]
-			FromTime, _ := time.ParseInLocation("2006-01-02 15:04", meetingRow[12], time.Local)
-			MeetingInfo.FromTime = FromTime
-			MeetingInfo.FromBeginAddress = meetingRow[13]
-			MeetingInfo.FromEndAddress = meetingRow[14]
-			MeetingInfo.FromShift = meetingRow[15]
-			result = append(result, &MeetingInfo)
+			if len(meetingRow) != 18 {
+				break
+			} else {
+				MeetingInfo := module.Meeting{}
+				MeetingInfo.MeetingName = meetingName
+				MeetingInfo.Name = meetingRow[0]
+				MeetingInfo.Level = getUserLevel(meetingRow[1])
+				MeetingInfo.Company = meetingRow[2]
+				MeetingInfo.Sex = meetingRow[3]
+				MeetingInfo.IdCard = meetingRow[4]
+				MeetingInfo.PhoneNumber = meetingRow[5]
+				MeetingInfo.IfOrderHotel = getIfOrder(meetingRow[6])
+				MeetingInfo.IfOrderPlane = getIfOrder(meetingRow[7])
+				//ToDate, _ := time.ParseInLocation("2006-01-02", meetingRow[8], time.Local)
+				MeetingInfo.ToDate = meetingRow[8]
+				//ToTime, _ := time.ParseInLocation("15:04", meetingRow[9], time.Local)
+				MeetingInfo.ToTime = meetingRow[9]
+				MeetingInfo.ToBeginAddress = meetingRow[10]
+				MeetingInfo.ToEndAddress = meetingRow[11]
+				MeetingInfo.ToShift = meetingRow[12]
+				//FromDate, _ := time.ParseInLocation("2006-01-02", meetingRow[13], time.Local)
+				MeetingInfo.FromDate = meetingRow[13]
+				//FromTime, _ := time.ParseInLocation("15:04", meetingRow[14], time.Local)
+				MeetingInfo.FromTime = meetingRow[14]
+				MeetingInfo.FromBeginAddress = meetingRow[15]
+				MeetingInfo.FromEndAddress = meetingRow[16]
+				MeetingInfo.FromShift = meetingRow[17]
+				MeetingInfo.IfSolve = 0
+				result = append(result, &MeetingInfo)
+			}
 		}
 	}
 	return result

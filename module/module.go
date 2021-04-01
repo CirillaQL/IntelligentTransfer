@@ -83,21 +83,30 @@ type Order struct {
 // MeetingInfo 从Excel表中获得的数据对应的结构体
 type Meeting struct {
 	ID               int
-	MeetingName      string    //会议的名称
-	Name             string    //用户的姓名
-	Level            uint32    //用户级别
-	Company          string    //用户所属的机构
-	Sex              string    //用户性别
-	IdCard           string    //身份证号码
-	PhoneNumber      string    //手机号码
-	IfOrderHotel     uint32    //是否订购酒店
-	IfOrderPlane     uint32    //是否订购机票
-	ToTime           time.Time //用户的出发时间
-	ToBeginAddress   string    //用户的出发地点
-	ToEndAddress     string    //用户到达的地方地点
-	ToShift          string    //去程航班信息
-	FromTime         time.Time //用户的回程出发时间
-	FromBeginAddress string    //用户的回城出发地点
-	FromEndAddress   string    //用户回程到达的地方地点
-	FromShift        string    //回程航班信息
+	MeetingName      string `gorm:"column:meeting_name"`     //会议的名称
+	Name             string `gorm:"column:name"`             //用户的姓名
+	Level            uint32 `gorm:"column:level"`            //用户级别
+	Company          string `gorm:"column:company"`          //用户所属的机构
+	Sex              string `gorm:"column:sex"`              //用户性别
+	IdCard           string `gorm:"column:id_card"`          //身份证号码
+	PhoneNumber      string `gorm:"column:phone_number"`     //手机号码
+	IfOrderHotel     uint32 `gorm:"column:if_order_hotel"`   //是否订购酒店
+	IfOrderPlane     uint32 `gorm:"column:if_order_plane"`   //是否订购机票
+	ToDate           string `gorm:"column:to_date"`          //用户的出发日期
+	ToTime           string `gorm:"column:to_time"`          //用户的出发时间
+	ToBeginAddress   string `gorm:"column:to_begin_address"` //用户的出发地点
+	ToEndAddress     string `gorm:"column:to_end_address"`   //用户到达的地方地点
+	ToShift          string `gorm:"column:to_shift"`         //去程航班信息
+	FromDate         string `gorm:"column:from_date"`
+	FromTime         string `gorm:"column:from_time"`          //用户的回程出发时间
+	FromBeginAddress string `gorm:"column:from_begin_address"` //用户的回城出发地点
+	FromEndAddress   string `gorm:"column:from_end_address"`   //用户回程到达的地方地点
+	FromShift        string `gorm:"column:from_shift"`         //回程航班信息
+	IfSolve          uint32 `gorm:"column:if_solve"`           //是否经过定时任务的处理
+}
+
+//从DB中获取信息转化为Map结构时的辅助数据结构，其中，IfPick为0时为送站，IfPick为1时为接站
+type MeetingDateInfo struct {
+	MeetingInfo Meeting
+	IfPick      uint32
 }

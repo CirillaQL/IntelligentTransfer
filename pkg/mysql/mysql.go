@@ -31,6 +31,8 @@ func initDB() {
 		if err != nil {
 			log.Errorf("init mysql db failed: %+v", err)
 			panic(err)
+		} else {
+			log.ZapLogger.Sugar().Info("init mysql success")
 		}
 	})
 }

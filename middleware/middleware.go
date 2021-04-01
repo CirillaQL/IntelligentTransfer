@@ -4,10 +4,8 @@ import (
 	"IntelligentTransfer/pkg/logger"
 	"IntelligentTransfer/pkg/redis"
 	"IntelligentTransfer/pkg/token"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"reflect"
 	"time"
 )
 
@@ -21,7 +19,6 @@ func Cors() gin.HandlerFunc {
 		c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
 		c.Header("Access-Control-Allow-Credentials", "true")
 		c.Header("Access-Control-Max-Age", "600")
-
 		// 放行所有OPTIONS方法
 		if method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusNoContent)
@@ -51,7 +48,7 @@ func GinLogger() gin.HandlerFunc {
 		// 请求IP
 		clientIP := c.ClientIP()
 		//日志格式
-		logger.Debugf("| %3d | %8v | %10s | %s | %s |",
+		logger.ZapLogger.Sugar().Infof("| %3d | %8v | %10s | %s | %s |",
 			statusCode,
 			latencyTime,
 			clientIP,
@@ -77,8 +74,6 @@ func Cookie() gin.HandlerFunc {
 			logger.ZapLogger.Sugar().Errorf("middleware get token from redis failed Err:%+v", err)
 			context.Abort()
 		}
-		fmt.Println(value)
-		fmt.Println(reflect.TypeOf(value))
 		tokenClaim, err := token.ParseToken(getToken)
 		if err != nil {
 			logger.ZapLogger.Sugar().Errorf("middleware parse token failed Err:%+v", err)
