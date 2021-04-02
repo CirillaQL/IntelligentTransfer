@@ -29,7 +29,7 @@ func Login(context *gin.Context) {
 	userInfo, password, inputType := loginJson(json)
 	result, userId, phoneNumber, err := service.LoginWithPassword(userInfo, password, inputType)
 	if err != nil || result == false {
-		logger.ZapLogger.Sugar().Errorf("user login failed err:%+v", err)
+		logger.ZapLogger.Sugar().Errorf("user login failed err:%+v, result:%+v", err, result)
 		context.JSON(http.StatusOK, gin.H{"msg": "登录失败"})
 	} else {
 		logger.ZapLogger.Sugar().Info("user login success")

@@ -3,8 +3,6 @@
 */
 package module
 
-import "time"
-
 // User 用户DB-Module
 type User struct {
 	ID          uint32 //自增主键
@@ -33,39 +31,19 @@ type Driver struct {
 	CarType   int    //车辆类型，使用int类型进行区分
 }
 
-// Meeting 会议DB-Module
-//type Meeting struct {
-//	ID              int       //主键id
-//	UUid            string    //对应的会议信息
-//	MeetingName     string    //会议的名称
-//	UserId          string    //参加会议人员的用户id
-//	UserName        string    //用户姓名
-//	UserPhoneNumber string    //用户电话号码
-//	OrganiserId     string    //组织者的用户id
-//	OrganiserName   string    //组织者的姓名
-//	IfOrganiser     int       //是否为主办人
-//	IfParticipant   int       //是否为讲师等重要参会人
-//	LeaveTime       time.Time //去程时间
-//	LeaveFromCity   string    //去程城市
-//	LeaveToCity     string    //到达城市
-//	BackTime        time.Time //返程时间
-//	BackFromCity    string    //返程城市
-//	BackToCity      string    //返程到达城市
-//}
-
 // SmartMeeting 根据时间划分的会议信息的DB-Module
 type SmartMeeting struct {
-	ID              int       //主键id
-	UUid            string    //对应的UUid
-	MeetingUUid     string    //对应的会议信息
-	UserId          string    //用户的uuid
-	UserName        string    //用户姓名
-	UserPhoneNumber string    //用户电话号码
-	FromAddress     string    //用户的出发地点
-	ToAddress       string    //用户到达的地方地点
-	BeginTime       time.Time //用户的出发时间
-	ArriveTime      time.Time //用户的到达时间
-	Shift           string    //用户入/离的航班信息
+	ID              int    //主键id
+	UUid            string //对应的UUid
+	MeetingUUid     string //对应的会议信息
+	UserName        string //用户姓名
+	UserPhoneNumber string //用户电话号码
+	FromAddress     string //用户的出发地点
+	ToAddress       string //用户到达的地方地点
+	PickTime        string //用户的出发时间
+	SentTime        string //用户的到达时间
+	Shift           string //用户入/离的航班信息
+	PickOrSent      uint32 //用户是接站还是送站 1为接站，0为送站
 }
 
 // Order 生成对应的订单的信息
@@ -82,27 +60,27 @@ type Order struct {
 
 // MeetingInfo 从Excel表中获得的数据对应的结构体
 type Meeting struct {
-	ID               int
-	MeetingName      string `gorm:"column:meeting_name"`     //会议的名称
-	Name             string `gorm:"column:name"`             //用户的姓名
-	Level            uint32 `gorm:"column:level"`            //用户级别
-	Company          string `gorm:"column:company"`          //用户所属的机构
-	Sex              string `gorm:"column:sex"`              //用户性别
-	IdCard           string `gorm:"column:id_card"`          //身份证号码
-	PhoneNumber      string `gorm:"column:phone_number"`     //手机号码
-	IfOrderHotel     uint32 `gorm:"column:if_order_hotel"`   //是否订购酒店
-	IfOrderPlane     uint32 `gorm:"column:if_order_plane"`   //是否订购机票
-	ToDate           string `gorm:"column:to_date"`          //用户的出发日期
-	ToTime           string `gorm:"column:to_time"`          //用户的出发时间
-	ToBeginAddress   string `gorm:"column:to_begin_address"` //用户的出发地点
-	ToEndAddress     string `gorm:"column:to_end_address"`   //用户到达的地方地点
-	ToShift          string `gorm:"column:to_shift"`         //去程航班信息
-	FromDate         string `gorm:"column:from_date"`
-	FromTime         string `gorm:"column:from_time"`          //用户的回程出发时间
-	FromBeginAddress string `gorm:"column:from_begin_address"` //用户的回城出发地点
-	FromEndAddress   string `gorm:"column:from_end_address"`   //用户回程到达的地方地点
-	FromShift        string `gorm:"column:from_shift"`         //回程航班信息
-	IfSolve          uint32 `gorm:"column:if_solve"`           //是否经过定时任务的处理
+	ID                int
+	MeetingUUid       string `gorm:"column:meeting_uuid"`        //会议的UUid
+	MeetingName       string `gorm:"column:meeting_name"`        //会议的名称
+	Name              string `gorm:"column:name"`                //用户的姓名
+	Level             uint32 `gorm:"column:level"`               //用户级别
+	Company           string `gorm:"column:company"`             //用户所属的机构
+	Sex               string `gorm:"column:sex"`                 //用户性别
+	IdCard            string `gorm:"column:id_card"`             //身份证号码
+	PhoneNumber       string `gorm:"column:phone_number"`        //手机号码
+	IfOrderHotel      uint32 `gorm:"column:if_order_hotel"`      //是否订购酒店
+	IfOrderPlane      uint32 `gorm:"column:if_order_plane"`      //是否订购机票
+	StartDate         string `gorm:"column:start_date"`          //用户的出发日期
+	StartTime         string `gorm:"column:start_time"`          //用户的出发时间
+	StartBeginAddress string `gorm:"column:start_begin_address"` //用户的出发地点
+	StartEndAddress   string `gorm:"column:start_end_address"`   //用户到达的地方地点
+	StartShift        string `gorm:"column:start_shift"`         //去程航班信息
+	ReturnDate        string `gorm:"column:return_date"`         //用户返程的日期
+	ReturnTime        string `gorm:"column:return_time"`         //用户的返程出发时间
+	ReturnEndAddress  string `gorm:"column:return_end_address"`  //用户回程到达的地方地点
+	ReturnShift       string `gorm:"column:return_shift"`        //回程航班信息
+	IfSolve           uint32 `gorm:"column:if_solve"`            //是否经过定时任务的处理
 }
 
 //从DB中获取信息转化为Map结构时的辅助数据结构，其中，IfPick为0时为送站，IfPick为1时为接站

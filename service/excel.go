@@ -58,14 +58,16 @@ func GetMeeting(SheetName, fileName string, errorChannel chan error, wg *sync.Wa
 // getMeetingsInfo 从Excel表中获取所有的数据并保存
 func getMeetingsInfo(rows [][]string, meetingName string) []*module.Meeting {
 	var result []*module.Meeting
+	uuid := generateUUID()
 	for index, meetingRow := range rows {
 		if index == 0 {
 			continue
 		} else {
-			if len(meetingRow) != 18 {
+			if len(meetingRow) != 17 {
 				break
 			} else {
 				MeetingInfo := module.Meeting{}
+				MeetingInfo.MeetingUUid = uuid
 				MeetingInfo.MeetingName = meetingName
 				MeetingInfo.Name = meetingRow[0]
 				MeetingInfo.Level = getUserLevel(meetingRow[1])
@@ -75,20 +77,17 @@ func getMeetingsInfo(rows [][]string, meetingName string) []*module.Meeting {
 				MeetingInfo.PhoneNumber = meetingRow[5]
 				MeetingInfo.IfOrderHotel = getIfOrder(meetingRow[6])
 				MeetingInfo.IfOrderPlane = getIfOrder(meetingRow[7])
-				//ToDate, _ := time.ParseInLocation("2006-01-02", meetingRow[8], time.Local)
-				MeetingInfo.ToDate = meetingRow[8]
-				//ToTime, _ := time.ParseInLocation("15:04", meetingRow[9], time.Local)
-				MeetingInfo.ToTime = meetingRow[9]
-				MeetingInfo.ToBeginAddress = meetingRow[10]
-				MeetingInfo.ToEndAddress = meetingRow[11]
-				MeetingInfo.ToShift = meetingRow[12]
+				MeetingInfo.StartDate = meetingRow[8]
+				MeetingInfo.StartTime = meetingRow[9]
+				MeetingInfo.StartBeginAddress = meetingRow[10]
+				MeetingInfo.StartEndAddress = meetingRow[11]
+				MeetingInfo.StartShift = meetingRow[12]
 				//FromDate, _ := time.ParseInLocation("2006-01-02", meetingRow[13], time.Local)
-				MeetingInfo.FromDate = meetingRow[13]
+				MeetingInfo.ReturnDate = meetingRow[13]
 				//FromTime, _ := time.ParseInLocation("15:04", meetingRow[14], time.Local)
-				MeetingInfo.FromTime = meetingRow[14]
-				MeetingInfo.FromBeginAddress = meetingRow[15]
-				MeetingInfo.FromEndAddress = meetingRow[16]
-				MeetingInfo.FromShift = meetingRow[17]
+				MeetingInfo.ReturnTime = meetingRow[14]
+				MeetingInfo.ReturnEndAddress = meetingRow[15]
+				MeetingInfo.ReturnShift = meetingRow[16]
 				MeetingInfo.IfSolve = 0
 				result = append(result, &MeetingInfo)
 			}
@@ -111,6 +110,7 @@ func getUserLevel(input string) uint32 {
 	}
 }
 
+//判断是否订了飞机和酒店
 func getIfOrder(input string) uint32 {
 	if input == "0" {
 		return 0
