@@ -1,6 +1,11 @@
 /*
  自定义错误包，对项目中的错误进行统一管理
 */
-package error
+package errorInfo
 
-var ()
+import "errors"
+
+var (
+	RegisterDriverParamsWrong   = errors.New("Register Driver with wrong params ")
+	RegisterDriverInsertDBWrong = errors.New("Register Driver insert db wrong ")
+)

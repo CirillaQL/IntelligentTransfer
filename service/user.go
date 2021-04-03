@@ -1,11 +1,14 @@
 package service
 
 import (
+	"IntelligentTransfer/constant"
+	errorInfo "IntelligentTransfer/error"
 	"IntelligentTransfer/module"
 	"IntelligentTransfer/pkg/encrypt"
 	"IntelligentTransfer/pkg/logger"
 	"IntelligentTransfer/pkg/mysql"
 	"fmt"
+	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -196,6 +199,41 @@ func validateRegister(json map[string]interface{}) error {
 	if json["phoneNumber"] == nil {
 		logger.Errorf("user register failed user's phoneNumber is nil")
 		return fmt.Errorf("user's phoneNumber is nil")
+	}
+	return nil
+}
+
+//司机注册服务
+func DriverRegister(json map[string]interface{}) error {
+	driver := module.Driver{}
+	//输入json校验
+	err := validateDriverRegister(json)
+	if err != nil {
+		return err
+	}
+	driver.UUid = generateUUID()
+	driver.UserUUid = json["userId"].(string)
+	driver.CarNumber = json["carNumber"].(string)
+	driver.CarType = json["carType"].(float64)
+	driver.StatusNow = constant.DRIVER_READY
+	//解析后准备注册
+	db := mysql.GetDB()
+	if result := db.Create(&driver); result.Error != nil {
+		logger.ZapLogger.Sugar().Errorf("Create Driver Failed Err: %+v ", result.Error)
+		return errors.Wrap(errorInfo.RegisterDriverInsertDBWrong, "Create Driver Failed")
+	}
+	return nil
+}
+
+func validateDriverRegister(json map[string]interface{}) error {
+	if json["userId"] == nil {
+		return errors.Wrap(errorInfo.RegisterDriverParamsWrong, "No userId")
+	}
+	if json["carNumber"] == nil {
+		return errors.Wrap(errorInfo.RegisterDriverParamsWrong, "No CarNumber")
+	}
+	if json["carType"] == nil {
+		return errors.Wrap(errorInfo.RegisterDriverParamsWrong, "No CarType")
 	}
 	return nil
 }

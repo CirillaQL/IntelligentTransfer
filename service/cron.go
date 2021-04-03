@@ -6,18 +6,22 @@ import (
 	"IntelligentTransfer/pkg/mysql"
 	"fmt"
 	"github.com/robfig/cron/v3"
+	"time"
 )
 
 var c *cron.Cron
 
+//定时任务初始化
 func init() {
 	c = cron.New()
 	logger.ZapLogger.Sugar().Info("Cron init success")
 }
 
+//开启定时任务
 func StartCron() {
 	logger.ZapLogger.Sugar().Info("Start Cron service success")
-	c.AddFunc("@every 30s", CreateTable)
+	c.AddFunc("@every 10s", CreateTable)
+	c.AddFunc("@every 5s", GetTodayPickInfoByOrder)
 	c.Start()
 	select {}
 }
@@ -77,6 +81,24 @@ func CreateTable() {
 		}
 		//将if_solve的值更新为1
 		db.Model(&module.Meeting{}).Where("if_solve = ?", 0).Update("if_solve", 1)
+	}
+}
+
+//获取当前日期
+func getToday() string {
+	date := time.Now().Format("2006-01-02")
+	return date
+}
+
+//按照时间从表中获取数据，进行排序，目前获取数据仅仅为获取到当天的数据，其他之后时间段的暂时并不需要
+func GetTodayPickInfoByOrder() {
+	dateNow := getToday()
+	db := mysql.GetDB()
+	var smartMeeting []module.SmartMeeting
+	smartMeeting = make([]module.SmartMeeting, 0)
+	if db.Migrator().HasTable(dateNow) {
+		db.Table(dateNow).Order("sent_time").Where("pick_or_sent = ?", 0).Find(&smartMeeting)
+		//获取到按照时间进行区分
 	}
 }
 

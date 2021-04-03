@@ -5,6 +5,7 @@ import (
 	"IntelligentTransfer/pkg/redis"
 	"IntelligentTransfer/pkg/token"
 	"IntelligentTransfer/service"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -18,7 +19,17 @@ func Register(context *gin.Context) {
 		logger.ZapLogger.Sugar().Errorf("Register user failed userInfo{%+v} err{%+v}", json, err)
 		context.JSON(http.StatusOK, gin.H{"msg": "注册失败", "userId": "", "error": err.Error()})
 	} else {
-		context.JSON(http.StatusOK, gin.H{"msg": "登录成功", "userId": UUid})
+		tokenString, err := token.GenToken(UUid, json["phoneNumber"].(string))
+		if err != nil {
+			logger.ZapLogger.Sugar().Errorf("Register user success but genToken failed. err:%+v", err)
+			context.JSON(http.StatusOK, gin.H{"msg": "注册失败", "userId": UUid, "token": tokenString})
+		}
+		err = redis.StoreToken(tokenString, UUid)
+		if err != nil {
+			logger.ZapLogger.Sugar().Errorf("User: %+v storeToken Failed. Err: %+v", UUid, err)
+			context.JSON(http.StatusOK, gin.H{"msg": "注册失败", "userId": UUid, "token": tokenString})
+		}
+		context.JSON(http.StatusOK, gin.H{"msg": "注册成功", "userId": UUid, "token": tokenString})
 	}
 }
 
@@ -58,4 +69,11 @@ func loginJson(json map[string]interface{}) (string, string, uint32) {
 	} else {
 		return "", "", 0
 	}
+}
+
+func RegisterDriver(context *gin.Context) {
+	json := make(map[string]interface{})
+	_ = context.BindJSON(&json)
+	s := service.DriverRegister(json)
+	fmt.Println(s)
 }

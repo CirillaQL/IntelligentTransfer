@@ -24,11 +24,12 @@ type User struct {
 
 // Driver 司机DB-Module
 type Driver struct {
-	ID        int    //主键id
-	UUid      string //司机对应的UUid
-	UserUUid  string //对应用户信息表的uuid
-	CarNumber string //车牌号
-	CarType   int    //车辆类型，使用int类型进行区分
+	ID        int     //主键id
+	UUid      string  //司机对应的UUid
+	UserUUid  string  //对应用户信息表的uuid
+	CarNumber string  //车牌号
+	CarType   float64 //车辆类型，使用int类型进行区分
+	StatusNow uint32  //司机当前状态
 }
 
 // SmartMeeting 根据时间划分的会议信息的DB-Module
