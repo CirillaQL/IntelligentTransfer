@@ -5,8 +5,9 @@ import (
 	"IntelligentTransfer/pkg/logger"
 	"IntelligentTransfer/pkg/mysql"
 	"fmt"
-	"github.com/robfig/cron/v3"
 	"time"
+
+	"github.com/robfig/cron/v3"
 )
 
 var c *cron.Cron
@@ -56,6 +57,7 @@ func CreateTable() {
 					smartmeeting.MeetingUUid = meeting.MeetingInfo.MeetingUUid
 					smartmeeting.UserName = meeting.MeetingInfo.Name
 					smartmeeting.UserPhoneNumber = meeting.MeetingInfo.PhoneNumber
+					smartmeeting.LeveL = meeting.MeetingInfo.Level
 					smartmeeting.FromAddress = ""
 					smartmeeting.ToAddress = meeting.MeetingInfo.ReturnEndAddress
 					smartmeeting.SentTime = meeting.MeetingInfo.ReturnTime
@@ -70,6 +72,7 @@ func CreateTable() {
 					smartmeeting.MeetingUUid = meeting.MeetingInfo.MeetingUUid
 					smartmeeting.UserName = meeting.MeetingInfo.Name
 					smartmeeting.UserPhoneNumber = meeting.MeetingInfo.PhoneNumber
+					smartmeeting.LeveL = meeting.MeetingInfo.Level
 					smartmeeting.FromAddress = meeting.MeetingInfo.StartBeginAddress
 					smartmeeting.ToAddress = meeting.MeetingInfo.StartEndAddress
 					smartmeeting.PickTime = meeting.MeetingInfo.StartTime
@@ -94,18 +97,18 @@ func getToday() string {
 func GetTodayPickInfoByOrder() {
 	dateNow := getToday()
 	db := mysql.GetDB()
-	var smartMeeting []module.SmartMeeting
-	smartMeeting = make([]module.SmartMeeting, 0)
+	smartMeeting := make([]module.SmartMeeting, 0)
 	if db.Migrator().HasTable(dateNow) {
-		db.Table(dateNow).Order("sent_time").Where("pick_or_sent = ?", 0).Find(&smartMeeting)
-		//获取到按照时间进行区分
+		//此时获取的为接站
+		db.Table(dateNow).Order("sent_time").Where("pick_or_sent = ?", 1).Find(&smartMeeting)
+		//获取到按照时间进行了排序的接站信息表
+
 	}
 }
 
 //从meeting表中获取数据拼接成map结构
 func getDateMap(meetings *[]module.Meeting) *map[string][]module.MeetingDateInfo {
-	var meetingInfo map[string][]module.MeetingDateInfo
-	meetingInfo = make(map[string][]module.MeetingDateInfo)
+	meetingInfo := make(map[string][]module.MeetingDateInfo)
 	for _, meeting := range *meetings {
 		//在此处将meeting拆分，拆成一个为去程，一个为回程
 		meetingToFrom := partitionMeeting(&meeting)

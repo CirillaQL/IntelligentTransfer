@@ -39,24 +39,13 @@ type SmartMeeting struct {
 	MeetingUUid     string //对应的会议信息
 	UserName        string //用户姓名
 	UserPhoneNumber string //用户电话号码
+	LeveL           uint32 //用户的等级
 	FromAddress     string //用户的出发地点
 	ToAddress       string //用户到达的地方地点
 	PickTime        string //用户的出发时间
 	SentTime        string //用户的到达时间
 	Shift           string //用户入/离的航班信息
 	PickOrSent      uint32 //用户是接站还是送站 1为接站，0为送站
-}
-
-// Order 生成对应的订单的信息
-type Order struct {
-	ID          int     //主键id
-	UUid        string  //订单的UUid
-	MeetingUUid string  //该用户参加的会议的uuid
-	DriverUUid  string  //关联对应的司机信息
-	UserId      string  //关联对应乘客的信息
-	FromAddress string  //出发地
-	ToAddress   string  //目的地
-	Price       float64 //车费
 }
 
 // MeetingInfo 从Excel表中获得的数据对应的结构体
@@ -88,4 +77,26 @@ type Meeting struct {
 type MeetingDateInfo struct {
 	MeetingInfo Meeting
 	IfPick      uint32
+}
+
+// Order 生成对应的订单的信息
+type Order struct {
+	ID         int     //自增id
+	UUid       string  `gorm:"column:uuid"`        //订单的UUid
+	DriverUUid string  `gorm:"column:driver_uuid"` //关联Driver表的uuid
+	UserName   string  `gorm:"column:user_name"`   //乘客的名字
+	UserPhone  string  `gorm:"column:user_phone"`  //乘客的电话号码
+	UserShift  string  `gorm:"column:user_shift"`  //乘客的航班
+	StartTime  string  `gorm:"column:start_time"`  //发车时间
+	CarNumber  string  `gorm:"column:car_number"`  //车牌号
+	CarType    float64 `gorm:"column:car_type"`    //车辆种类
+	Price      float64 `gorm:"column:price"`       //预计车费
+}
+
+// Passenger 乘客信息
+type Passenger struct {
+	UserName   string //用户姓名
+	UserPhone  string //用户电话号码
+	UserShift  string //用户对应的航班信息
+	ArriveTime string //用户到达时间
 }

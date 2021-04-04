@@ -120,7 +120,7 @@ func LoginWithPassword(userInfo, password string, inputType uint32) (bool, strin
 	}
 }
 
-//拼装User结构体
+//assembleUser 拼装User结构体
 func assembleUser(json map[string]interface{}) (*module.User, error) {
 	User := &module.User{}
 	uuid := generateUUID()
@@ -178,7 +178,7 @@ func assembleUser(json map[string]interface{}) (*module.User, error) {
 	return User, nil
 }
 
-//校验输入的注册参数是否正常
+//validateRegister 校验输入的注册参数是否正常
 func validateRegister(json map[string]interface{}) error {
 	if json["username"] == nil {
 		logger.Errorf("user register failed username is nil")
@@ -203,7 +203,7 @@ func validateRegister(json map[string]interface{}) error {
 	return nil
 }
 
-//司机注册服务
+// DriverRegister 司机注册服务
 func DriverRegister(json map[string]interface{}) error {
 	driver := module.Driver{}
 	//输入json校验
@@ -225,6 +225,7 @@ func DriverRegister(json map[string]interface{}) error {
 	return nil
 }
 
+// validateDriverRegister 司机注册时json结构校验
 func validateDriverRegister(json map[string]interface{}) error {
 	if json["userId"] == nil {
 		return errors.Wrap(errorInfo.RegisterDriverParamsWrong, "No userId")
@@ -236,4 +237,13 @@ func validateDriverRegister(json map[string]interface{}) error {
 		return errors.Wrap(errorInfo.RegisterDriverParamsWrong, "No CarType")
 	}
 	return nil
+}
+
+//GetAllReadyDriver 获取所有Driver
+func GetAllReadyDriver() []module.Driver {
+	//获取所有Read状态的司机
+	drivers := make([]module.Driver, 0)
+	db := mysql.GetDB()
+	db.Where("status_now = ?", constant.DRIVER_READY).Find(drivers)
+	return drivers
 }
