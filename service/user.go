@@ -8,6 +8,7 @@ import (
 	"IntelligentTransfer/pkg/logger"
 	"IntelligentTransfer/pkg/mysql"
 	"fmt"
+
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -214,7 +215,7 @@ func DriverRegister(json map[string]interface{}) error {
 	driver.UUid = generateUUID()
 	driver.UserUUid = json["userId"].(string)
 	driver.CarNumber = json["carNumber"].(string)
-	driver.CarType = json["carType"].(float64)
+	driver.CarType = carTypeToFloat64(json["carType"].(string))
 	driver.StatusNow = constant.DRIVER_READY
 	//解析后准备注册
 	db := mysql.GetDB()
@@ -239,11 +240,62 @@ func validateDriverRegister(json map[string]interface{}) error {
 	return nil
 }
 
-//GetAllReadyDriver 获取所有Driver
+// carTypeToFloat64 将输入类型转化为float64
+func carTypeToFloat64(input string) float64 {
+	if input == "1" {
+		return 1
+	} else if input == "2" {
+		return 2
+	} else if input == "3" {
+		return 3
+	} else if input == "4" {
+		return 4
+	} else {
+		return 0
+	}
+}
+
+// GetAllReadyDriver 获取所有Driver
 func GetAllReadyDriver() []module.Driver {
 	//获取所有Read状态的司机
 	drivers := make([]module.Driver, 0)
 	db := mysql.GetDB()
 	db.Where("status_now = ?", constant.DRIVER_READY).Find(drivers)
+	return drivers
+}
+
+// GetAllTypeOneDriver() 获取所有小轿车的司机
+func GetAllTypeOneDriver() []module.Driver {
+	//获取所有Read状态的小轿车司机
+	drivers := make([]module.Driver, 0)
+	db := mysql.GetDB()
+	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.SMALL_CAR).Find(drivers)
+	return drivers
+}
+
+// GetAllTypeTwoDriver() 获取所有别克商务的司机
+func GetAllTypeTwoDriver() []module.Driver {
+	//获取所有Read状态的别克商务司机
+	drivers := make([]module.Driver, 0)
+	db := mysql.GetDB()
+	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.SUV).Find(drivers)
+	return drivers
+}
+
+// GetAllTypeThreeDriver() 获取所有考斯特的司机
+func GetAllTypeThreeDriver() []module.Driver {
+	//获取所有Read状态的考斯特司机
+	drivers := make([]module.Driver, 0)
+	db := mysql.GetDB()
+	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.COASTER).Find(drivers)
+	return drivers
+}
+
+// GetAllTypeFourDriver() 获取所有大巴车的司机
+func GetAllTypeFourDriver() []module.Driver {
+	//获取所有Read状态的大巴车司机
+	drivers := make([]module.Driver, 0)
+	db := mysql.GetDB()
+	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.BUS).Find(drivers)
 	return drivers
 }

@@ -100,9 +100,11 @@ func GetTodayPickInfoByOrder() {
 	smartMeeting := make([]module.SmartMeeting, 0)
 	if db.Migrator().HasTable(dateNow) {
 		//此时获取的为接站
-		db.Table(dateNow).Order("sent_time").Where("pick_or_sent = ?", 1).Find(&smartMeeting)
+		db.Table(dateNow).Order("sent_time").Where("pick_or_sent = ?", 0).Find(&smartMeeting)
 		//获取到按照时间进行了排序的接站信息表
-
+		for _, v := range smartMeeting {
+			fmt.Println(v)
+		}
 	}
 }
 
@@ -170,3 +172,5 @@ func partitionMeeting(meeting *module.Meeting) []module.Meeting {
 	fmt.Println(result)
 	return result
 }
+
+//分配主办人车辆

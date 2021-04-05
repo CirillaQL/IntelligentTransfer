@@ -5,9 +5,9 @@ import (
 	"IntelligentTransfer/pkg/redis"
 	"IntelligentTransfer/pkg/token"
 	"IntelligentTransfer/service"
-	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 //注册路由
@@ -74,6 +74,10 @@ func loginJson(json map[string]interface{}) (string, string, uint32) {
 func RegisterDriver(context *gin.Context) {
 	json := make(map[string]interface{})
 	_ = context.BindJSON(&json)
-	s := service.DriverRegister(json)
-	fmt.Println(s)
+	err := service.DriverRegister(json)
+	if err != nil {
+		logger.ZapLogger.Sugar().Errorf("Driver register success")
+		context.JSON(http.StatusOK, gin.H{"msg": "注册失败"})
+	}
+	context.JSON(http.StatusOK, gin.H{"msg": "注册成功"})
 }

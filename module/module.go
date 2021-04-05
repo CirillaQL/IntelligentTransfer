@@ -46,6 +46,7 @@ type SmartMeeting struct {
 	SentTime        string //用户的到达时间
 	Shift           string //用户入/离的航班信息
 	PickOrSent      uint32 //用户是接站还是送站 1为接站，0为送站
+	IfOrder         uint32 //是否生成了订单 0为未生成 1为已生成
 }
 
 // MeetingInfo 从Excel表中获得的数据对应的结构体
