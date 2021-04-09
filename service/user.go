@@ -269,7 +269,7 @@ func GetAllTypeOneDriver() []module.Driver {
 	//获取所有Read状态的小轿车司机
 	drivers := make([]module.Driver, 0)
 	db := mysql.GetDB()
-	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.SMALL_CAR).Find(drivers)
+	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.SMALL_CAR).Find(&drivers)
 	return drivers
 }
 
@@ -278,7 +278,7 @@ func GetAllTypeTwoDriver() []module.Driver {
 	//获取所有Read状态的别克商务司机
 	drivers := make([]module.Driver, 0)
 	db := mysql.GetDB()
-	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.SUV).Find(drivers)
+	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.SUV).Find(&drivers)
 	return drivers
 }
 
@@ -287,7 +287,7 @@ func GetAllTypeThreeDriver() []module.Driver {
 	//获取所有Read状态的考斯特司机
 	drivers := make([]module.Driver, 0)
 	db := mysql.GetDB()
-	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.COASTER).Find(drivers)
+	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.COASTER).Find(&drivers)
 	return drivers
 }
 
@@ -296,6 +296,6 @@ func GetAllTypeFourDriver() []module.Driver {
 	//获取所有Read状态的大巴车司机
 	drivers := make([]module.Driver, 0)
 	db := mysql.GetDB()
-	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.BUS).Find(drivers)
+	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.BUS).Find(&drivers)
 	return drivers
 }

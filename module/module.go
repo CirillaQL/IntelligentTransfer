@@ -25,11 +25,11 @@ type User struct {
 // Driver 司机DB-Module
 type Driver struct {
 	ID        int     //主键id
-	UUid      string  //司机对应的UUid
-	UserUUid  string  //对应用户信息表的uuid
-	CarNumber string  //车牌号
-	CarType   float64 //车辆类型，使用int类型进行区分
-	StatusNow uint32  //司机当前状态
+	UUid      string  `gorm:"column:u_uid"`      //司机对应的UUid
+	UserUUid  string  `gorm:"column:user_u_uid"` //对应用户信息表的uuid
+	CarNumber string  `gorm:"column:car_number"` //车牌号
+	CarType   float64 `gorm:"column:car_type"`   //车辆类型，使用int类型进行区分
+	StatusNow uint32  `gorm:"column:status_now"` //司机当前状态
 }
 
 // SmartMeeting 根据时间划分的会议信息的DB-Module
@@ -47,6 +47,7 @@ type SmartMeeting struct {
 	Shift           string //用户入/离的航班信息
 	PickOrSent      uint32 //用户是接站还是送站 1为接站，0为送站
 	IfOrder         uint32 //是否生成了订单 0为未生成 1为已生成
+	DriverUUid      string //司机的uuid
 }
 
 // MeetingInfo 从Excel表中获得的数据对应的结构体
@@ -100,4 +101,12 @@ type Passenger struct {
 	UserPhone  string //用户电话号码
 	UserShift  string //用户对应的航班信息
 	ArriveTime string //用户到达时间
+}
+
+// ShiftInfo 航班信息
+type ShiftInfo struct {
+	Shift     string //航班号
+	StartTime string //起飞时间
+	EndTime   string //降落时间
+	IfDelay   uint32 //是否延误
 }

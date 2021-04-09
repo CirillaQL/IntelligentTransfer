@@ -18,16 +18,17 @@ func init() {
 	logger.ZapLogger.Sugar().Info("Cron init success")
 }
 
-//开启定时任务
+// StartCron 开启定时任务
 func StartCron() {
 	logger.ZapLogger.Sugar().Info("Start Cron service success")
 	c.AddFunc("@every 10s", CreateTable)
-	c.AddFunc("@every 5s", GetTodayPickInfoByOrder)
+	c.AddFunc("@every 10s", GetTodayPickInfoByOrder)
+	//c.AddFunc("@every 10s", GeneMasterCar)
 	c.Start()
 	select {}
 }
 
-//生成以日期为TableName的数据库表
+// CreateTable 生成以日期为TableName的数据库表
 func CreateTable() {
 	db := mysql.GetDB()
 	var result []module.Meeting
@@ -63,6 +64,7 @@ func CreateTable() {
 					smartmeeting.SentTime = meeting.MeetingInfo.ReturnTime
 					smartmeeting.Shift = meeting.MeetingInfo.ReturnShift
 					smartmeeting.PickOrSent = 0
+					smartmeeting.DriverUUid = ""
 					db.Table(date).Create(&smartmeeting)
 				}
 				//准备开会，接站
@@ -78,6 +80,7 @@ func CreateTable() {
 					smartmeeting.PickTime = meeting.MeetingInfo.StartTime
 					smartmeeting.Shift = meeting.MeetingInfo.StartShift
 					smartmeeting.PickOrSent = 1
+					smartmeeting.DriverUUid = ""
 					db.Table(date).Create(&smartmeeting)
 				}
 			}
@@ -93,19 +96,150 @@ func getToday() string {
 	return date
 }
 
-//按照时间从表中获取数据，进行排序，目前获取数据仅仅为获取到当天的数据，其他之后时间段的暂时并不需要
+// GetTodayPickInfoByOrder 按照时间从表中获取数据，进行排序，目前获取数据仅仅为获取到当天的数据，其他之后时间段的暂时并不需要
 func GetTodayPickInfoByOrder() {
-	dateNow := getToday()
+	//dateNow := getToday()
 	db := mysql.GetDB()
-	smartMeeting := make([]module.SmartMeeting, 0)
-	if db.Migrator().HasTable(dateNow) {
+	smartMeetingPick := make([]module.SmartMeeting, 0)
+	if db.Migrator().HasTable("2021-04-08") {
 		//此时获取的为接站
-		db.Table(dateNow).Order("sent_time").Where("pick_or_sent = ?", 0).Find(&smartMeeting)
+		db.Table("2021-04-08").Order("sent_time").Where("pick_or_sent = ?", 0).Find(&smartMeetingPick)
 		//获取到按照时间进行了排序的接站信息表
-		for _, v := range smartMeeting {
-			fmt.Println(v)
+		SentTimeMap := createSentTimeMap(smartMeetingPick)
+		fmt.Println(SentTimeMap)
+	}
+}
+
+// 根据排序后获取的user表生成按照送站时间生成的map表
+func createSentTimeMap(users []module.SmartMeeting) *map[string][]module.SmartMeeting {
+	var result map[string][]module.SmartMeeting
+	result = make(map[string][]module.SmartMeeting)
+	for _, v := range users {
+		if result[v.SentTime] == nil {
+			var smartMeetings []module.SmartMeeting
+			smartMeetings = append(smartMeetings, v)
+			result[v.SentTime] = smartMeetings
+		} else {
+			result[v.SentTime] = append(result[v.SentTime], v)
 		}
 	}
+	return &result
+}
+
+// 根据排序后获取的user表生成按照接站时间生成的map表
+func createPickTimeMap(users []module.SmartMeeting) *map[string][]module.SmartMeeting {
+	var result map[string][]module.SmartMeeting
+	result = make(map[string][]module.SmartMeeting)
+	for _, v := range users {
+		if result[v.PickTime] == nil {
+			var smartMeetings []module.SmartMeeting
+			smartMeetings = append(smartMeetings, v)
+			result[v.PickTime] = smartMeetings
+		} else {
+			result[v.PickTime] = append(result[v.PickTime], v)
+		}
+	}
+	return &result
+}
+
+// assignmentDrivers 根据司机情况分配司机
+func assignmentDrivers(users map[string][]module.SmartMeeting) *map[string][]module.SmartMeeting {
+	for timeToGet, userList := range users {
+		//该时间段只有一个人或者两个人，优先级：小车->别克->考斯特->大巴车
+		if len(userList) == 1 || len(userList) == 2 {
+			//获取所有的Ready司机信息
+			smallCar := GetAllTypeOneDriver()
+			suv := GetAllTypeTwoDriver()
+			coaster := GetAllTypeThreeDriver()
+			bus := GetAllTypeFourDriver()
+			if len(smallCar) >= 1 {
+				afterAssignment := assignmentSmallCar(users[timeToGet], smallCar)
+				users[timeToGet] = afterAssignment
+			} else if len(suv) >= 1 {
+				//表明当前有别克suv
+				for _, v := range users[timeToGet] {
+					v.DriverUUid = suv[0].UUid
+				}
+			} else if len(coaster) >= 1 {
+				//表明当前有考斯特
+				for _, v := range users[timeToGet] {
+					v.DriverUUid = coaster[0].UUid
+				}
+			} else if len(bus) >= 1 {
+				//表明当前有大巴
+				for _, v := range users[timeToGet] {
+					v.DriverUUid = bus[0].UUid
+				}
+			} else {
+				continue
+			}
+		}
+		//该时间段有3-5个人，优先级：别克->考斯特->大巴车，如果没有则分配单人小轿车
+		if len(userList) >= 3 && len(userList) <= 5 {
+			//获取所有的Ready司机信息
+			smallCar := GetAllTypeOneDriver()
+			suv := GetAllTypeTwoDriver()
+			coaster := GetAllTypeThreeDriver()
+			bus := GetAllTypeFourDriver()
+			if len(suv) >= 1 {
+				//表明当前有别克suv
+				for _, v := range users[timeToGet] {
+					v.DriverUUid = suv[0].UUid
+				}
+			} else if len(coaster) >= 1 {
+				//表明当前有考斯特
+				for _, v := range users[timeToGet] {
+					v.DriverUUid = coaster[0].UUid
+				}
+			} else if len(bus) >= 1 {
+				//表明当前有大巴
+				for _, v := range users[timeToGet] {
+					v.DriverUUid = bus[0].UUid
+				}
+			} else if len(smallCar) >= 1 {
+				carNum
+			}
+		}
+	}
+}
+
+/*
+ 此处为分配小轿车的算法，目前为同一时刻内到达时，会根据user数量进行配置
+*/
+func assignmentSmallCar(users []module.SmartMeeting, drivers []module.Driver) []module.SmartMeeting {
+	numOfUsers := len(users)
+	if numOfUsers == 1 {
+		users[0].DriverUUid = drivers[0].UUid
+	} else if numOfUsers == 2 {
+		users[0].DriverUUid = drivers[0].UUid
+		users[1].DriverUUid = drivers[0].UUid
+	} else {
+		if numOfUsers%2 == 0 {
+			j := 0
+			for i := 0; i < numOfUsers-1; i = i + 2 {
+				users[i].DriverUUid = drivers[j].UUid
+				users[i+1].DriverUUid = drivers[j].UUid
+				j++
+				if j == len(drivers) {
+					break
+				}
+			}
+		} else {
+			j := 0
+			for i := 0; i < numOfUsers-1; i = i + 2 {
+				users[i].DriverUUid = drivers[j].UUid
+				users[i+1].DriverUUid = drivers[j].UUid
+				j++
+				if j == len(drivers) {
+					break
+				}
+			}
+			if j <= len(drivers) {
+				users[numOfUsers-1].DriverUUid = drivers[j].UUid
+			}
+		}
+	}
+	return users
 }
 
 //从meeting表中获取数据拼接成map结构
@@ -173,4 +307,18 @@ func partitionMeeting(meeting *module.Meeting) []module.Meeting {
 	return result
 }
 
-//分配主办人车辆
+// GeneMasterCar 分配主办人车辆
+func GeneMasterCar() {
+	//1.找到所有主办人
+	db := mysql.GetDB()
+	var users []module.SmartMeeting
+	//此处日期表的时间应该改为获取当前时间
+	db.Table("2021-04-08").Where("leve_l = ?", 1).Find(&users)
+	//
+	orders := GenerateMasterOrder(users)
+	fmt.Println("-------------------------------------")
+	fmt.Println(orders)
+	fmt.Println("-------------------------------------")
+}
+
+// assignmentDrivers 分配司机，根据传入的用户列表和用户数分配司机
