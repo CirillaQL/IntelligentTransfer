@@ -142,69 +142,27 @@ func createPickTimeMap(users []module.SmartMeeting) *map[string][]module.SmartMe
 	return &result
 }
 
+/*
+  TODO: 分配司机后应该将该司机的状态更新
+*/
+
 // assignmentDrivers 根据司机情况分配司机
 func assignmentDrivers(users map[string][]module.SmartMeeting) *map[string][]module.SmartMeeting {
 	for timeToGet, userList := range users {
-		//该时间段只有一个人或者两个人，优先级：小车->别克->考斯特->大巴车
-		if len(userList) == 1 || len(userList) == 2 {
-			//获取所有的Ready司机信息
-			smallCar := GetAllTypeOneDriver()
-			suv := GetAllTypeTwoDriver()
-			coaster := GetAllTypeThreeDriver()
-			bus := GetAllTypeFourDriver()
-			if len(smallCar) >= 1 {
-				afterAssignment := assignmentSmallCar(users[timeToGet], smallCar)
-				users[timeToGet] = afterAssignment
-			} else if len(suv) >= 1 {
-				//表明当前有别克suv
-				for _, v := range users[timeToGet] {
-					v.DriverUUid = suv[0].UUid
-				}
-			} else if len(coaster) >= 1 {
-				//表明当前有考斯特
-				for _, v := range users[timeToGet] {
-					v.DriverUUid = coaster[0].UUid
-				}
-			} else if len(bus) >= 1 {
-				//表明当前有大巴
-				for _, v := range users[timeToGet] {
-					v.DriverUUid = bus[0].UUid
-				}
-			} else {
-				continue
-			}
-		}
-		//该时间段有3-5个人，优先级：别克->考斯特->大巴车，如果没有则分配单人小轿车
-		if len(userList) >= 3 && len(userList) <= 5 {
-			//获取所有的Ready司机信息
-			smallCar := GetAllTypeOneDriver()
-			suv := GetAllTypeTwoDriver()
-			coaster := GetAllTypeThreeDriver()
-			bus := GetAllTypeFourDriver()
-			if len(suv) >= 1 {
-				//表明当前有别克suv
-				for _, v := range users[timeToGet] {
-					v.DriverUUid = suv[0].UUid
-				}
-			} else if len(coaster) >= 1 {
-				//表明当前有考斯特
-				for _, v := range users[timeToGet] {
-					v.DriverUUid = coaster[0].UUid
-				}
-			} else if len(bus) >= 1 {
-				//表明当前有大巴
-				for _, v := range users[timeToGet] {
-					v.DriverUUid = bus[0].UUid
-				}
-			} else if len(smallCar) >= 1 {
-				carNum
-			}
-		}
+		fmt.Println(timeToGet)
+		fmt.Println(userList)
+		/*
+		 TODO: 此处需要根据同一时间段不同的User数选择生成方案
+		*/
 	}
+	return nil
 }
 
 /*
- 此处为分配小轿车的算法，目前为同一时刻内到达时，会根据user数量进行配置
+	此函数为分配小轿车的算法，其中小脚测的载客数为1-2人，思想为：
+		1.如果用户数量少于一辆小轿车的最大载客量2人，那么直接分配一辆就可以
+		2.如果用户数量多于一辆小轿车的最大载客量2人，那么求余数，如果余数为0，说明可以按照最大载客量全部坐满，
+		  如果余数不为0，那么将最大载客量的整数倍装满后，剩下的余数个再去装
 */
 func assignmentSmallCar(users []module.SmartMeeting, drivers []module.Driver) []module.SmartMeeting {
 	numOfUsers := len(users)
@@ -240,6 +198,162 @@ func assignmentSmallCar(users []module.SmartMeeting, drivers []module.Driver) []
 		}
 	}
 	return users
+}
+
+/*
+	此函数为分配别克SUV的算法，其中SUV的载客数为3-5人，思想为：
+		1.如果用户数量少于一辆SUV的最大载客量5人，那么直接分配一辆就可以
+		2.如果用户数量多于一辆SUV的最大载客量5人，那么求余数，如果余数为0，说明可以按照最大载客量全部坐满，
+		  如果余数不为0，那么将最大载客量的整数倍装满后，剩下的余数个再去装
+*/
+func assignmentSuv(users []module.SmartMeeting, drivers []module.Driver) []module.SmartMeeting {
+	numOfUsers := len(users)
+	//此时待安排的用户数少于5人，因此一辆SUV便可以装下所有人
+	if numOfUsers <= 5 {
+		for i := 0; i < numOfUsers; i++ {
+			users[i].DriverUUid = drivers[0].UUid
+		}
+		return users
+	} else {
+		//此时待安排的用户数多于5，需要多辆SUV
+		//余数为0，正好全部坐满
+		if numOfUsers%5 == 0 {
+			j := 0
+			for i := 0; i < numOfUsers-4; i = i + 5 {
+				for k := i; k < 5; k++ {
+					users[k].DriverUUid = drivers[j].UUid
+				}
+				j++
+				if j == len(drivers) {
+					break
+				}
+			}
+		} else {
+			//余数为其他数
+			numberOfLeftUser := numOfUsers % 5
+			j := 0
+			for i := 0; i <= numOfUsers-numberOfLeftUser; i = i + 5 {
+				for k := i; k < i+5; k++ {
+					users[k].DriverUUid = drivers[j].UUid
+				}
+				j++
+				if j == len(drivers) {
+					break
+				}
+			}
+			if len(drivers) > j {
+				//此时还有剩余车辆，用来装剩余的人
+				for i := numOfUsers - 1; i >= numOfUsers-numberOfLeftUser; i-- {
+					users[i].DriverUUid = drivers[j+1].UUid
+				}
+			}
+		}
+		return users
+	}
+}
+
+/*
+	此函数为分配考斯特Coaster的算法，其中考斯特的载客数为6-13人，思想为：
+		1.如果用户数量少于一辆考斯特Coaster的最大载客量13人，那么直接分配一辆就可以
+		2.如果用户数量多于一辆考斯特Coaster的最大载客量13人，那么求余数，如果余数为0，说明可以按照最大载客量全部坐满，
+		  如果余数不为0，那么将最大载客量的整数倍装满后，剩下的余数个再去装
+*/
+func assignmentCoaster(users []module.SmartMeeting, drivers []module.Driver) []module.SmartMeeting {
+	numOfUsers := len(users)
+	//此时待安排的用户数少于13人，因此一辆考斯特便可以装下所有人
+	if numOfUsers <= 13 {
+		for i := 0; i < numOfUsers; i++ {
+			users[i].DriverUUid = drivers[0].UUid
+		}
+		return users
+	} else {
+		//此时待安排的用户数多于13，需要多辆考斯特
+		//余数为0，正好全部坐满
+		if numOfUsers%13 == 0 {
+			j := 0
+			for i := 0; i < numOfUsers-12; i = i + 13 {
+				for k := i; k < 13; k++ {
+					users[k].DriverUUid = drivers[j].UUid
+				}
+				j++
+				if j == len(drivers) {
+					break
+				}
+			}
+		} else {
+			//余数为其他数
+			numberOfLeftUser := numOfUsers % 13
+			j := 0
+			for i := 0; i <= numOfUsers-numberOfLeftUser; i = i + 13 {
+				for k := i; k < i+13; k++ {
+					users[k].DriverUUid = drivers[j].UUid
+				}
+				j++
+				if j == len(drivers) {
+					break
+				}
+			}
+			if len(drivers) > j {
+				//此时还有剩余车辆，用来装剩余的人
+				for i := numOfUsers - 1; i >= numOfUsers-numberOfLeftUser; i-- {
+					users[i].DriverUUid = drivers[j+1].UUid
+				}
+			}
+		}
+		return users
+	}
+}
+
+/*
+	此函数为分配大巴车Bus的算法，其中大巴车的载客数为14-40人，思想为：
+		1.如果用户数量少于一辆大巴车Bus的最大载客量40人，那么直接分配一辆就可以
+		2.如果用户数量多于一辆大巴车Bus的最大载客量40人，那么求余数，如果余数为0，说明可以按照最大载客量全部坐满，
+		  如果余数不为0，那么将最大载客量的整数倍装满后，剩下的余数个再去装
+*/
+func assignmentBus(users []module.SmartMeeting, drivers []module.Driver) []module.SmartMeeting {
+	numOfUsers := len(users)
+	//此时待安排的用户数少于40人，因此一辆大巴车便可以装下所有人
+	if numOfUsers <= 40 {
+		for i := 0; i < numOfUsers; i++ {
+			users[i].DriverUUid = drivers[0].UUid
+		}
+		return users
+	} else {
+		//此时待安排的用户数多于40，需要多辆大巴车
+		//余数为0，正好全部坐满
+		if numOfUsers%40 == 0 {
+			j := 0
+			for i := 0; i < numOfUsers-39; i = i + 40 {
+				for k := i; k < 40; k++ {
+					users[k].DriverUUid = drivers[j].UUid
+				}
+				j++
+				if j == len(drivers) {
+					break
+				}
+			}
+		} else {
+			//余数为其他数
+			numberOfLeftUser := numOfUsers % 40
+			j := 0
+			for i := 0; i <= numOfUsers-numberOfLeftUser; i = i + 40 {
+				for k := i; k < i+40; k++ {
+					users[k].DriverUUid = drivers[j].UUid
+				}
+				j++
+				if j == len(drivers) {
+					break
+				}
+			}
+			if len(drivers) > j {
+				//此时还有剩余车辆，用来装剩余的人
+				for i := numOfUsers - 1; i >= numOfUsers-numberOfLeftUser; i-- {
+					users[i].DriverUUid = drivers[j+1].UUid
+				}
+			}
+		}
+		return users
+	}
 }
 
 //从meeting表中获取数据拼接成map结构
