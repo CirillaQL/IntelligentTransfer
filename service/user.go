@@ -264,7 +264,7 @@ func GetAllReadyDriver() []module.Driver {
 	return drivers
 }
 
-// GetAllTypeOneDriver() 获取所有小轿车的司机
+// GetAllTypeOneDriver 获取所有小轿车的司机
 func GetAllTypeOneDriver() []module.Driver {
 	//获取所有Read状态的小轿车司机
 	drivers := make([]module.Driver, 0)
@@ -273,7 +273,7 @@ func GetAllTypeOneDriver() []module.Driver {
 	return drivers
 }
 
-// GetAllTypeTwoDriver() 获取所有别克商务的司机
+// GetAllTypeTwoDriver 获取所有别克商务的司机
 func GetAllTypeTwoDriver() []module.Driver {
 	//获取所有Read状态的别克商务司机
 	drivers := make([]module.Driver, 0)
@@ -282,7 +282,7 @@ func GetAllTypeTwoDriver() []module.Driver {
 	return drivers
 }
 
-// GetAllTypeThreeDriver() 获取所有考斯特的司机
+// GetAllTypeThreeDriver 获取所有考斯特的司机
 func GetAllTypeThreeDriver() []module.Driver {
 	//获取所有Read状态的考斯特司机
 	drivers := make([]module.Driver, 0)
@@ -291,11 +291,17 @@ func GetAllTypeThreeDriver() []module.Driver {
 	return drivers
 }
 
-// GetAllTypeFourDriver() 获取所有大巴车的司机
+// GetAllTypeFourDriver 获取所有大巴车的司机
 func GetAllTypeFourDriver() []module.Driver {
 	//获取所有Read状态的大巴车司机
 	drivers := make([]module.Driver, 0)
 	db := mysql.GetDB()
 	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.BUS).Find(&drivers)
 	return drivers
+}
+
+// UpdateDriverType 更新司机的状态
+func UpdateDriverType(uuid string, carStatus int) {
+	db := mysql.GetDB()
+	db.Model(&module.Driver{}).Where("u_uid = ?", uuid).Update("status_now", carStatus)
 }

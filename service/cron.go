@@ -1,6 +1,7 @@
 package service
 
 import (
+	"IntelligentTransfer/constant"
 	"IntelligentTransfer/module"
 	"IntelligentTransfer/pkg/logger"
 	"IntelligentTransfer/pkg/mysql"
@@ -103,10 +104,20 @@ func GetTodayPickInfoByOrder() {
 	smartMeetingPick := make([]module.SmartMeeting, 0)
 	if db.Migrator().HasTable("2021-04-08") {
 		//此时获取的为接站
-		db.Table("2021-04-08").Order("sent_time").Where("pick_or_sent = ?", 0).Find(&smartMeetingPick)
+		db.Table("2021-04-08").Order("sent_time").Where("pick_or_sent = ? AND driver_u_uid = ?", 0, "").Find(&smartMeetingPick)
+		if len(smartMeetingPick) == 0 {
+			return
+		}
 		//获取到按照时间进行了排序的接站信息表
 		SentTimeMap := createSentTimeMap(smartMeetingPick)
-		fmt.Println(SentTimeMap)
+		result := assignmentDrivers(*SentTimeMap)
+		for _, value := range *result {
+			for _, v := range value {
+				fmt.Println(v.DriverUUid)
+				db.Table("2021-04-08").Where("u_uid = ?", v.UUid).Update("driver_u_uid", v.DriverUUid)
+			}
+		}
+
 	}
 }
 
@@ -149,13 +160,36 @@ func createPickTimeMap(users []module.SmartMeeting) *map[string][]module.SmartMe
 // assignmentDrivers 根据司机情况分配司机
 func assignmentDrivers(users map[string][]module.SmartMeeting) *map[string][]module.SmartMeeting {
 	for timeToGet, userList := range users {
-		fmt.Println(timeToGet)
-		fmt.Println(userList)
 		/*
-		 TODO: 此处需要根据同一时间段不同的User数选择生成方案
+			fmt.Println(timeToGet)
+			fmt.Println(userList)
+
+			 TODO: 此处需要根据同一时间段不同的User数选择生成方案
 		*/
+		numberOfPassenger := len(userList)
+		//当该时间的用户数小于等于2人，则优先安排小轿车
+		if numberOfPassenger <= 2 {
+			smallCar := GetAllTypeOneDriver()
+			afterAssignment := assignmentSmallCar(userList, smallCar)
+			users[timeToGet] = afterAssignment
+		} else if 3 <= numberOfPassenger && 5 >= numberOfPassenger {
+			//该时间的用户数为3-5人，优先安排SUV
+			suv := GetAllTypeTwoDriver()
+			afterAssignment := assignmentSuv(userList, suv)
+			users[timeToGet] = afterAssignment
+		} else if 6 <= numberOfPassenger && 13 >= numberOfPassenger {
+			//该时间的用户数为6-13人，优先安排考斯特
+			coaster := GetAllTypeThreeDriver()
+			afterAssignment := assignmentCoaster(userList, coaster)
+			users[timeToGet] = afterAssignment
+		} else if 14 <= numberOfPassenger {
+			//该时间的用户数为14人，优先安排大巴车
+			bus := GetAllTypeFourDriver()
+			afterAssignment := assignmentBus(userList, bus)
+			users[timeToGet] = afterAssignment
+		}
 	}
-	return nil
+	return &users
 }
 
 /*
@@ -168,15 +202,18 @@ func assignmentSmallCar(users []module.SmartMeeting, drivers []module.Driver) []
 	numOfUsers := len(users)
 	if numOfUsers == 1 {
 		users[0].DriverUUid = drivers[0].UUid
+		UpdateDriverType(drivers[0].UUid, constant.DRIVER_WORKING)
 	} else if numOfUsers == 2 {
 		users[0].DriverUUid = drivers[0].UUid
 		users[1].DriverUUid = drivers[0].UUid
+		UpdateDriverType(drivers[0].UUid, constant.DRIVER_WORKING)
 	} else {
 		if numOfUsers%2 == 0 {
 			j := 0
 			for i := 0; i < numOfUsers-1; i = i + 2 {
 				users[i].DriverUUid = drivers[j].UUid
 				users[i+1].DriverUUid = drivers[j].UUid
+				UpdateDriverType(drivers[j].UUid, constant.DRIVER_WORKING)
 				j++
 				if j == len(drivers) {
 					break
@@ -187,6 +224,7 @@ func assignmentSmallCar(users []module.SmartMeeting, drivers []module.Driver) []
 			for i := 0; i < numOfUsers-1; i = i + 2 {
 				users[i].DriverUUid = drivers[j].UUid
 				users[i+1].DriverUUid = drivers[j].UUid
+				UpdateDriverType(drivers[j].UUid, constant.DRIVER_WORKING)
 				j++
 				if j == len(drivers) {
 					break
@@ -194,6 +232,7 @@ func assignmentSmallCar(users []module.SmartMeeting, drivers []module.Driver) []
 			}
 			if j <= len(drivers) {
 				users[numOfUsers-1].DriverUUid = drivers[j].UUid
+				UpdateDriverType(drivers[j].UUid, constant.DRIVER_WORKING)
 			}
 		}
 	}
@@ -212,6 +251,7 @@ func assignmentSuv(users []module.SmartMeeting, drivers []module.Driver) []modul
 	if numOfUsers <= 5 {
 		for i := 0; i < numOfUsers; i++ {
 			users[i].DriverUUid = drivers[0].UUid
+			UpdateDriverType(drivers[0].UUid, constant.DRIVER_WORKING)
 		}
 		return users
 	} else {
@@ -222,6 +262,7 @@ func assignmentSuv(users []module.SmartMeeting, drivers []module.Driver) []modul
 			for i := 0; i < numOfUsers-4; i = i + 5 {
 				for k := i; k < 5; k++ {
 					users[k].DriverUUid = drivers[j].UUid
+					UpdateDriverType(drivers[j].UUid, constant.DRIVER_WORKING)
 				}
 				j++
 				if j == len(drivers) {
@@ -235,6 +276,7 @@ func assignmentSuv(users []module.SmartMeeting, drivers []module.Driver) []modul
 			for i := 0; i <= numOfUsers-numberOfLeftUser; i = i + 5 {
 				for k := i; k < i+5; k++ {
 					users[k].DriverUUid = drivers[j].UUid
+					UpdateDriverType(drivers[j].UUid, constant.DRIVER_WORKING)
 				}
 				j++
 				if j == len(drivers) {
@@ -245,6 +287,7 @@ func assignmentSuv(users []module.SmartMeeting, drivers []module.Driver) []modul
 				//此时还有剩余车辆，用来装剩余的人
 				for i := numOfUsers - 1; i >= numOfUsers-numberOfLeftUser; i-- {
 					users[i].DriverUUid = drivers[j+1].UUid
+					UpdateDriverType(drivers[j+1].UUid, constant.DRIVER_WORKING)
 				}
 			}
 		}
@@ -264,6 +307,7 @@ func assignmentCoaster(users []module.SmartMeeting, drivers []module.Driver) []m
 	if numOfUsers <= 13 {
 		for i := 0; i < numOfUsers; i++ {
 			users[i].DriverUUid = drivers[0].UUid
+			UpdateDriverType(drivers[0].UUid, constant.DRIVER_WORKING)
 		}
 		return users
 	} else {
@@ -274,6 +318,7 @@ func assignmentCoaster(users []module.SmartMeeting, drivers []module.Driver) []m
 			for i := 0; i < numOfUsers-12; i = i + 13 {
 				for k := i; k < 13; k++ {
 					users[k].DriverUUid = drivers[j].UUid
+					UpdateDriverType(drivers[j].UUid, constant.DRIVER_WORKING)
 				}
 				j++
 				if j == len(drivers) {
@@ -287,6 +332,7 @@ func assignmentCoaster(users []module.SmartMeeting, drivers []module.Driver) []m
 			for i := 0; i <= numOfUsers-numberOfLeftUser; i = i + 13 {
 				for k := i; k < i+13; k++ {
 					users[k].DriverUUid = drivers[j].UUid
+					UpdateDriverType(drivers[j].UUid, constant.DRIVER_WORKING)
 				}
 				j++
 				if j == len(drivers) {
@@ -297,6 +343,7 @@ func assignmentCoaster(users []module.SmartMeeting, drivers []module.Driver) []m
 				//此时还有剩余车辆，用来装剩余的人
 				for i := numOfUsers - 1; i >= numOfUsers-numberOfLeftUser; i-- {
 					users[i].DriverUUid = drivers[j+1].UUid
+					UpdateDriverType(drivers[j+1].UUid, constant.DRIVER_WORKING)
 				}
 			}
 		}
@@ -316,6 +363,7 @@ func assignmentBus(users []module.SmartMeeting, drivers []module.Driver) []modul
 	if numOfUsers <= 40 {
 		for i := 0; i < numOfUsers; i++ {
 			users[i].DriverUUid = drivers[0].UUid
+			UpdateDriverType(drivers[0].UUid, constant.DRIVER_WORKING)
 		}
 		return users
 	} else {
@@ -326,6 +374,7 @@ func assignmentBus(users []module.SmartMeeting, drivers []module.Driver) []modul
 			for i := 0; i < numOfUsers-39; i = i + 40 {
 				for k := i; k < 40; k++ {
 					users[k].DriverUUid = drivers[j].UUid
+					UpdateDriverType(drivers[j].UUid, constant.DRIVER_WORKING)
 				}
 				j++
 				if j == len(drivers) {
@@ -339,6 +388,7 @@ func assignmentBus(users []module.SmartMeeting, drivers []module.Driver) []modul
 			for i := 0; i <= numOfUsers-numberOfLeftUser; i = i + 40 {
 				for k := i; k < i+40; k++ {
 					users[k].DriverUUid = drivers[j].UUid
+					UpdateDriverType(drivers[j].UUid, constant.DRIVER_WORKING)
 				}
 				j++
 				if j == len(drivers) {
@@ -349,6 +399,7 @@ func assignmentBus(users []module.SmartMeeting, drivers []module.Driver) []modul
 				//此时还有剩余车辆，用来装剩余的人
 				for i := numOfUsers - 1; i >= numOfUsers-numberOfLeftUser; i-- {
 					users[i].DriverUUid = drivers[j+1].UUid
+					UpdateDriverType(drivers[j+1].UUid, constant.DRIVER_WORKING)
 				}
 			}
 		}
@@ -420,19 +471,3 @@ func partitionMeeting(meeting *module.Meeting) []module.Meeting {
 	fmt.Println(result)
 	return result
 }
-
-// GeneMasterCar 分配主办人车辆
-func GeneMasterCar() {
-	//1.找到所有主办人
-	db := mysql.GetDB()
-	var users []module.SmartMeeting
-	//此处日期表的时间应该改为获取当前时间
-	db.Table("2021-04-08").Where("leve_l = ?", 1).Find(&users)
-	//
-	orders := GenerateMasterOrder(users)
-	fmt.Println("-------------------------------------")
-	fmt.Println(orders)
-	fmt.Println("-------------------------------------")
-}
-
-// assignmentDrivers 分配司机，根据传入的用户列表和用户数分配司机
