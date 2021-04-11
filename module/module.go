@@ -50,7 +50,7 @@ type SmartMeeting struct {
 	DriverUUid      string //司机的uuid
 }
 
-// MeetingInfo 从Excel表中获得的数据对应的结构体
+// Meeting MeetingInfo 从Excel表中获得的数据对应的结构体
 type Meeting struct {
 	ID                int
 	MeetingUUid       string `gorm:"column:meeting_uuid"`        //会议的UUid
@@ -75,7 +75,7 @@ type Meeting struct {
 	IfSolve           uint32 `gorm:"column:if_solve"`            //是否经过定时任务的处理
 }
 
-//从DB中获取信息转化为Map结构时的辅助数据结构，其中，IfPick为0时为送站，IfPick为1时为接站
+// MeetingDateInfo 从DB中获取信息转化为Map结构时的辅助数据结构，其中，IfPick为0时为送站，IfPick为1时为接站
 type MeetingDateInfo struct {
 	MeetingInfo Meeting
 	IfPick      uint32

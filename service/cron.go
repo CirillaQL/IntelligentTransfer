@@ -99,25 +99,49 @@ func getToday() string {
 
 // GetTodayPickInfoByOrder 按照时间从表中获取数据，进行排序，目前获取数据仅仅为获取到当天的数据，其他之后时间段的暂时并不需要
 func GetTodayPickInfoByOrder() {
-	//dateNow := getToday()
 	db := mysql.GetDB()
-	smartMeetingPick := make([]module.SmartMeeting, 0)
 	if db.Migrator().HasTable("2021-04-08") {
-		//此时获取的为接站
-		db.Table("2021-04-08").Order("sent_time").Where("pick_or_sent = ? AND driver_u_uid = ?", 0, "").Find(&smartMeetingPick)
-		if len(smartMeetingPick) == 0 {
-			return
-		}
-		//获取到按照时间进行了排序的接站信息表
-		SentTimeMap := createSentTimeMap(smartMeetingPick)
-		result := assignmentDrivers(*SentTimeMap)
-		for _, value := range *result {
-			for _, v := range value {
-				fmt.Println(v.DriverUUid)
-				db.Table("2021-04-08").Where("u_uid = ?", v.UUid).Update("driver_u_uid", v.DriverUUid)
-			}
-		}
+		go dueTodayPick("2021-04-08")
+		go dueTodaySent("2021-04-08")
+	}
+}
 
+//封装获取到的接站信息
+func dueTodayPick(tableName string) {
+	smartMeetingPick := make([]module.SmartMeeting, 0)
+	db := mysql.GetDB()
+	//此处获取的为接站
+	db.Table(tableName).Order("pick_time").Where("pick_or_sent = ? AND driver_u_uid = ?", 1, "").Find(&smartMeetingPick)
+	if len(smartMeetingPick) == 0 {
+		return
+	}
+	//获取到按照时间进行了排序的接站信息表
+	pickTimeMap := createSentTimeMap(smartMeetingPick)
+	pickResult := assignmentDrivers(*pickTimeMap)
+	for _, value := range *pickResult {
+		for _, v := range value {
+			logger.ZapLogger.Sugar().Infof("user: %+v has Driver: %+v", v.UserName, v.DriverUUid)
+			_ = updateDriverInfoToDB(tableName, v.UUid, v.DriverUUid)
+		}
+	}
+}
+
+func dueTodaySent(tableName string) {
+	smartMeetingSent := make([]module.SmartMeeting, 0)
+	db := mysql.GetDB()
+	//此时获取的为送站
+	db.Table(tableName).Order("sent_time").Where("pick_or_sent = ? AND driver_u_uid = ?", 0, "").Find(&smartMeetingSent)
+	if len(smartMeetingSent) == 0 {
+		return
+	}
+	//获取到按照时间进行了排序的接站信息表
+	sentTimeMap := createSentTimeMap(smartMeetingSent)
+	sentResult := assignmentDrivers(*sentTimeMap)
+	for _, value := range *sentResult {
+		for _, v := range value {
+			logger.ZapLogger.Sugar().Infof("user: %+v has Driver: %+v", v.UserName, v.DriverUUid)
+			_ = updateDriverInfoToDB(tableName, v.UUid, v.DriverUUid)
+		}
 	}
 }
 
@@ -153,18 +177,11 @@ func createPickTimeMap(users []module.SmartMeeting) *map[string][]module.SmartMe
 	return &result
 }
 
-/*
-  TODO: 分配司机后应该将该司机的状态更新
-*/
-
 // assignmentDrivers 根据司机情况分配司机
 func assignmentDrivers(users map[string][]module.SmartMeeting) *map[string][]module.SmartMeeting {
 	for timeToGet, userList := range users {
 		/*
-			fmt.Println(timeToGet)
-			fmt.Println(userList)
-
-			 TODO: 此处需要根据同一时间段不同的User数选择生成方案
+			此处采用尽量少的车辆策略，根据某个时间段到达的人数不同，采用不同的分配策略
 		*/
 		numberOfPassenger := len(userList)
 		//当该时间的用户数小于等于2人，则优先安排小轿车
@@ -190,6 +207,16 @@ func assignmentDrivers(users map[string][]module.SmartMeeting) *map[string][]mod
 		}
 	}
 	return &users
+}
+
+// 分配司机后，将分配后的司机状态更新到DB中
+func updateDriverInfoToDB(tableName, smartMeetingUUid, driverUUid string) error {
+	db := mysql.GetDB()
+	if err := db.Table(tableName).Where("u_uid = ?", smartMeetingUUid).Update("driver_u_uid", driverUUid).Error; err != nil {
+		logger.ZapLogger.Sugar().Errorf("SmartMeeting: %+v Update Driver Failed. Err: %+v", smartMeetingUUid, err)
+		return err
+	}
+	return nil
 }
 
 /*
