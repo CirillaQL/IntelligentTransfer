@@ -8,4 +8,6 @@ import "errors"
 var (
 	RegisterDriverParamsWrong   = errors.New("Register Driver with wrong params ")
 	RegisterDriverInsertDBWrong = errors.New("Register Driver insert db wrong ")
+
+	TableDoesNotExist = errors.New("Table is not exist ")
 )

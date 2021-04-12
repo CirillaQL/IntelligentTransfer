@@ -24,7 +24,7 @@ func StartCron() {
 	logger.ZapLogger.Sugar().Info("Start Cron service success")
 	c.AddFunc("@every 10s", CreateTable)
 	c.AddFunc("@every 10s", GetTodayPickInfoByOrder)
-	//c.AddFunc("@every 10s", GeneMasterCar)
+	//c.AddFunc("@every 10s", GeneOrder)
 	c.Start()
 	select {}
 }
@@ -104,6 +104,7 @@ func GetTodayPickInfoByOrder() {
 		go dueTodayPick("2021-04-08")
 		go dueTodaySent("2021-04-08")
 	}
+	go GeneOrder("2021-04-08")
 }
 
 //封装获取到的接站信息

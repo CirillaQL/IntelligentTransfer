@@ -10,7 +10,7 @@ import (
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 )
 
-//处理Excel
+// OpenExcel 处理Excel
 func OpenExcel(fileName string) []error {
 	var errorList []error
 	excel, err := excelize.OpenFile("./storage/" + fileName)

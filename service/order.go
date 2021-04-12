@@ -1,7 +1,9 @@
 package service
 
 import (
+	errorInfo "IntelligentTransfer/error"
 	"IntelligentTransfer/module"
+	"IntelligentTransfer/pkg/logger"
 	"IntelligentTransfer/pkg/mysql"
 )
 
@@ -11,5 +13,69 @@ func GeneOrder(tableName string) {
 	var users []module.SmartMeeting
 	db := mysql.GetDB()
 	db.Table(tableName).Where("if_order = ? AND driver_u_uid <> ?", 0, "").Find(&users)
+	for _, user := range users {
+		//每个人都有自己的一份订单
+		order := CreateOrder(user)
+		if db.Migrator().HasTable("orders") {
+			db.Create(&order)
+		} else {
+			_ = db.Migrator().CreateTable(&module.Order{})
+			db.Create(&order)
+		}
+		updateUserOrder(tableName, user.UUid)
+	}
+}
 
+//CreateOrder 根据传入的user(smartMeeting)生成Order结构体
+func CreateOrder(user module.SmartMeeting) module.Order {
+	var order module.Order
+	order.UUid = generateUUID()
+	order.DriverUUid = user.DriverUUid
+	order.UserName = user.UserName
+	order.UserPhone = user.UserPhoneNumber
+	order.UserShift = user.Shift
+	if user.PickOrSent == 1 {
+		//接站
+		order.StartTime = user.PickTime
+	} else {
+		//送站
+		order.StartTime = user.SentTime
+	}
+	var driver module.Driver
+	db := mysql.GetDB()
+	db.Where("u_uid = ?", user.DriverUUid).Find(&driver)
+	order.CarNumber = driver.CarNumber
+	order.CarType = driver.CarType
+	if order.CarType == 1 {
+		order.Price = 150
+	} else if order.CarType == 2 {
+		order.Price = 100
+	} else if order.CarType == 3 {
+		order.Price = 60
+	} else if order.Price == 4 {
+		order.Price = 20
+	} else {
+		order.Price = 0
+	}
+	return order
+}
+
+//更新用户的if_order
+func updateUserOrder(tableName, uuid string) {
+	db := mysql.GetDB()
+	db.Table(tableName).Where("u_uid = ?", uuid).Update("if_order", 1)
+}
+
+// CancelUserOrder 用户主动取消订单,通过传入的信息来定位到对应的用户接送站信息
+func CancelUserOrder(tableName, userPhone string, pickOrSent uint32) error {
+	//首先根据tableName与userPhone定位到对应的用户信息，使用pickOrSent确定为接站还是送站
+	db := mysql.GetDB()
+	//存在性校验
+	if db.Migrator().HasTable(tableName) == false {
+		logger.ZapLogger.Sugar().Errorf("User:%+v cancel order Error. Table doesn't exist", userPhone)
+		return errorInfo.TableDoesNotExist
+	}
+	//更新接送的司机信息
+	db.Table(tableName).Where("")
+	return nil
 }

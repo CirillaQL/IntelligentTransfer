@@ -89,6 +89,7 @@ type Order struct {
 	UserName   string  `gorm:"column:user_name"`   //乘客的名字
 	UserPhone  string  `gorm:"column:user_phone"`  //乘客的电话号码
 	UserShift  string  `gorm:"column:user_shift"`  //乘客的航班
+	StartDate  string  `gorm:"column:start_date"`  //用户出发的时间
 	StartTime  string  `gorm:"column:start_time"`  //发车时间
 	CarNumber  string  `gorm:"column:car_number"`  //车牌号
 	CarType    float64 `gorm:"column:car_type"`    //车辆种类
