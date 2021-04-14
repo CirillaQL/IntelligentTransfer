@@ -60,7 +60,7 @@ func CreateTable() {
 					smartmeeting.UserName = meeting.MeetingInfo.Name
 					smartmeeting.UserPhoneNumber = meeting.MeetingInfo.PhoneNumber
 					smartmeeting.LeveL = meeting.MeetingInfo.Level
-					smartmeeting.FromAddress = ""
+					smartmeeting.FromAddress = meeting.MeetingInfo.ReturnStartAddress
 					smartmeeting.ToAddress = meeting.MeetingInfo.ReturnEndAddress
 					smartmeeting.SentTime = meeting.MeetingInfo.ReturnTime
 					smartmeeting.Shift = meeting.MeetingInfo.ReturnShift
@@ -121,8 +121,13 @@ func dueTodayPick(tableName string) {
 	pickResult := assignmentDrivers(*pickTimeMap)
 	for _, value := range *pickResult {
 		for _, v := range value {
-			logger.ZapLogger.Sugar().Infof("user: %+v has Driver: %+v", v.UserName, v.DriverUUid)
-			_ = updateDriverInfoToDB(tableName, v.UUid, v.DriverUUid)
+			if v.DriverUUid != "" {
+				logger.ZapLogger.Sugar().Infof("user: %+v has Driver: %+v", v.UserName, v.DriverUUid)
+				_ = updateDriverInfoToDB(tableName, v.UUid, v.DriverUUid)
+			} else {
+				logger.ZapLogger.Sugar().Infof("user: %+v doesn't have driver! ", v.UserName)
+				// TODO:后续会给会议组织者进行提醒
+			}
 		}
 	}
 }
@@ -140,8 +145,13 @@ func dueTodaySent(tableName string) {
 	sentResult := assignmentDrivers(*sentTimeMap)
 	for _, value := range *sentResult {
 		for _, v := range value {
-			logger.ZapLogger.Sugar().Infof("user: %+v has Driver: %+v", v.UserName, v.DriverUUid)
-			_ = updateDriverInfoToDB(tableName, v.UUid, v.DriverUUid)
+			if v.DriverUUid != "" {
+				logger.ZapLogger.Sugar().Infof("user: %+v has Driver: %+v", v.UserName, v.DriverUUid)
+				_ = updateDriverInfoToDB(tableName, v.UUid, v.DriverUUid)
+			} else {
+				logger.ZapLogger.Sugar().Infof("user: %+v doesn't have driver! ", v.UserName)
+				// TODO:后续会给会议组织者进行提醒
+			}
 		}
 	}
 }
@@ -227,6 +237,9 @@ func updateDriverInfoToDB(tableName, smartMeetingUUid, driverUUid string) error 
 		  如果余数不为0，那么将最大载客量的整数倍装满后，剩下的余数个再去装
 */
 func assignmentSmallCar(users []module.SmartMeeting, drivers []module.Driver) []module.SmartMeeting {
+	if len(drivers) < 1 {
+		return users
+	}
 	numOfUsers := len(users)
 	if numOfUsers == 1 {
 		users[0].DriverUUid = drivers[0].UUid
@@ -274,6 +287,9 @@ func assignmentSmallCar(users []module.SmartMeeting, drivers []module.Driver) []
 		  如果余数不为0，那么将最大载客量的整数倍装满后，剩下的余数个再去装
 */
 func assignmentSuv(users []module.SmartMeeting, drivers []module.Driver) []module.SmartMeeting {
+	if len(drivers) < 1 {
+		return users
+	}
 	numOfUsers := len(users)
 	//此时待安排的用户数少于5人，因此一辆SUV便可以装下所有人
 	if numOfUsers <= 5 {
@@ -330,6 +346,9 @@ func assignmentSuv(users []module.SmartMeeting, drivers []module.Driver) []modul
 		  如果余数不为0，那么将最大载客量的整数倍装满后，剩下的余数个再去装
 */
 func assignmentCoaster(users []module.SmartMeeting, drivers []module.Driver) []module.SmartMeeting {
+	if len(drivers) < 1 {
+		return users
+	}
 	numOfUsers := len(users)
 	//此时待安排的用户数少于13人，因此一辆考斯特便可以装下所有人
 	if numOfUsers <= 13 {
@@ -386,6 +405,9 @@ func assignmentCoaster(users []module.SmartMeeting, drivers []module.Driver) []m
 		  如果余数不为0，那么将最大载客量的整数倍装满后，剩下的余数个再去装
 */
 func assignmentBus(users []module.SmartMeeting, drivers []module.Driver) []module.SmartMeeting {
+	if len(drivers) < 1 {
+		return users
+	}
 	numOfUsers := len(users)
 	//此时待安排的用户数少于40人，因此一辆大巴车便可以装下所有人
 	if numOfUsers <= 40 {

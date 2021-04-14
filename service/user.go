@@ -305,3 +305,17 @@ func UpdateDriverType(uuid string, carStatus int) {
 	db := mysql.GetDB()
 	db.Model(&module.Driver{}).Where("u_uid = ?", uuid).Update("status_now", carStatus)
 }
+
+// GetUserInfoByPhoneNumber  通过电话号码获取用户信息
+func GetUserInfoByPhoneNumber(phoneNumber string) module.User {
+	db := mysql.GetDB()
+	//phone_number加密
+	aesPhoneNumber, err := encrypt.AesEncrypt(phoneNumber)
+	if err != nil {
+		logger.ZapLogger.Sugar().Errorf("GetUserInfoByPhoneNumber failed. Encrypt user's phoneNumber{%+v} err: %+v", phoneNumber, err)
+		return module.User{}
+	}
+	var user module.User
+	db.Where("phone_number = ?", aesPhoneNumber).Find(&user)
+	return user
+}

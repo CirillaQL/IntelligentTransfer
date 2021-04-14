@@ -53,19 +53,26 @@ func GetMeeting(SheetName, fileName string, errorChannel chan error, wg *sync.Wa
 		errorChannel <- err
 	}
 	meetingList := getMeetingsInfo(rows, SheetName)
+	fmt.Println(meetingList)
 	db := mysql.GetDB()
-	db.Create(&meetingList)
+	if db.Migrator().HasTable("meetings") {
+		db.Table("meetings").Create(&meetingList)
+	} else {
+		db.Migrator().CreateTable(&module.Meeting{})
+		db.Table("meetings").Create(&meetingList)
+	}
+
 }
 
 // getMeetingsInfo 从Excel表中获取所有的数据并保存
-func getMeetingsInfo(rows [][]string, meetingName string) []*module.Meeting {
-	var result []*module.Meeting
+func getMeetingsInfo(rows [][]string, meetingName string) []module.Meeting {
+	var result []module.Meeting
 	uuid := generateUUID()
 	for index, meetingRow := range rows {
 		if index == 0 {
 			continue
 		} else {
-			if len(meetingRow) != 17 {
+			if len(meetingRow) != 18 {
 				break
 			} else {
 				MeetingInfo := module.Meeting{}
@@ -84,14 +91,13 @@ func getMeetingsInfo(rows [][]string, meetingName string) []*module.Meeting {
 				MeetingInfo.StartBeginAddress = meetingRow[10]
 				MeetingInfo.StartEndAddress = meetingRow[11]
 				MeetingInfo.StartShift = meetingRow[12]
-				//FromDate, _ := time.ParseInLocation("2006-01-02", meetingRow[13], time.Local)
 				MeetingInfo.ReturnDate = meetingRow[13]
-				//FromTime, _ := time.ParseInLocation("15:04", meetingRow[14], time.Local)
 				MeetingInfo.ReturnTime = meetingRow[14]
-				MeetingInfo.ReturnEndAddress = meetingRow[15]
-				MeetingInfo.ReturnShift = meetingRow[16]
+				MeetingInfo.ReturnStartAddress = meetingRow[15]
+				MeetingInfo.ReturnEndAddress = meetingRow[16]
+				MeetingInfo.ReturnShift = meetingRow[17]
 				MeetingInfo.IfSolve = 0
-				result = append(result, &MeetingInfo)
+				result = append(result, MeetingInfo)
 			}
 		}
 	}

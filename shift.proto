@@ -1,0 +1,24 @@
+// rpc.proto
+syntax = "proto3";
+
+package shift;
+option go_package="./shift";
+
+// 定义获取航班信息的请求头
+message GetShiftReq {
+    string shiftNumber = 1;
+    string date = 2;
+}
+
+//定义获取航班信息的返回体
+message GetShiftRsp{
+    string shiftNumber = 1;
+    string date = 2;
+    string takeoffTime = 3;
+    string landingTime = 4;
+}
+
+// 定义接口HelloService
+service GetShiftService {
+    rpc GetShift (GetShiftReq) returns (GetShiftRsp);
+}

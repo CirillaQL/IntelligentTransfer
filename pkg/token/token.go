@@ -2,15 +2,16 @@ package token
 
 import (
 	"fmt"
-	jwt "github.com/dgrijalva/jwt-go"
 	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 const TokenExpireDuration = time.Hour * 2
 
 var MySecret = []byte("IntelligentTransfer")
 
-//自定义的TokenClaims结构体
+// MyClaims 自定义的TokenClaims结构体
 type MyClaims struct {
 	UUid        string `json:"UUid"`
 	PhoneNumber string `json:"phone_number"`
@@ -36,7 +37,7 @@ func ParseToken(tokenString string) (*MyClaims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: ")
 		}
-		return []byte(MySecret), nil
+		return MySecret, nil
 	})
 	if claims, ok := token.Claims.(*MyClaims); ok && token.Valid {
 		return claims, nil

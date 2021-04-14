@@ -15,7 +15,7 @@ func GeneOrder(tableName string) {
 	db.Table(tableName).Where("if_order = ? AND driver_u_uid <> ?", 0, "").Find(&users)
 	for _, user := range users {
 		//每个人都有自己的一份订单
-		order := CreateOrder(user)
+		order := CreateOrder(user, tableName)
 		if db.Migrator().HasTable("orders") {
 			db.Create(&order)
 		} else {
@@ -27,19 +27,26 @@ func GeneOrder(tableName string) {
 }
 
 //CreateOrder 根据传入的user(smartMeeting)生成Order结构体
-func CreateOrder(user module.SmartMeeting) module.Order {
+func CreateOrder(user module.SmartMeeting, tableName string) module.Order {
 	var order module.Order
 	order.UUid = generateUUID()
 	order.DriverUUid = user.DriverUUid
 	order.UserName = user.UserName
 	order.UserPhone = user.UserPhoneNumber
 	order.UserShift = user.Shift
+	order.StartDate = tableName
 	if user.PickOrSent == 1 {
 		//接站
 		order.StartTime = user.PickTime
 	} else {
 		//送站
 		order.StartTime = user.SentTime
+	}
+	if user.PickOrSent == 0 {
+		//送站
+		order.PickOrSent = 0
+		order.FromAddress = user.FromAddress
+		order.ToAddress = user.ToAddress
 	}
 	var driver module.Driver
 	db := mysql.GetDB()
@@ -76,6 +83,15 @@ func CancelUserOrder(tableName, userPhone string, pickOrSent uint32) error {
 		return errorInfo.TableDoesNotExist
 	}
 	//更新接送的司机信息
-	db.Table(tableName).Where("")
+	db.Table(tableName).Where("user_phone = ? ")
 	return nil
+}
+
+// DriverCancelOrder 司机主动取消订单
+func DriverCancelOrder(uuid string) {
+	//在Order表中找到对应的数据，删除对应的数据
+	db := mysql.GetDB()
+	db.Table("orders").Where("driver_u_uid = ?", uuid).Update("driver_u_uid", "")
+	//更新smartmeeting表中，所有对应的司机id
+	db.Table(getToday()).Where("driver_u_uid = ?", uuid).Update("driver_u_uid", "")
 }
