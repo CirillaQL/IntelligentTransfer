@@ -19,7 +19,7 @@ const (
 	address = "localhost:50051"
 )
 
-func Grpct() {
+func GetShiftInfo(shift, date string) {
 	//建立链接
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 
@@ -31,14 +31,14 @@ func Grpct() {
 
 	Client := pb.NewGetShiftServiceClient(conn)
 
-	// 设定请求超时时间 3s
+	// 设定请求超时时间 6s
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*6)
 	defer cancel()
 
 	// UserIndex 请求
 	Reponse, err := Client.GetShift(ctx, &pb.GetShiftReq{
-		ShiftNumber: "HU7601",
-		Date:        "2021-04-14",
+		ShiftNumber: shift,
+		Date:        date,
 	})
 	fmt.Println(Reponse)
 }
