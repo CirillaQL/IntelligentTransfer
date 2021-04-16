@@ -6,7 +6,7 @@ import (
 	"IntelligentTransfer/module"
 	"IntelligentTransfer/pkg/encrypt"
 	"IntelligentTransfer/pkg/logger"
-	"IntelligentTransfer/pkg/mysql"
+	sql "IntelligentTransfer/pkg/mysql"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -63,7 +63,7 @@ func Register(json map[string]interface{}) (string, error) {
 		}
 	}
 	//保存到DB
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	db.Create(&User)
 	logger.ZapLogger.Sugar().Infof("user:{%+v} register success", User)
 	return User.UUID, nil
@@ -72,7 +72,7 @@ func Register(json map[string]interface{}) (string, error) {
 // LoginWithPassword 用户登录服务，此接口为根据电话/邮箱和密码登录，验证码登录另写
 func LoginWithPassword(userInfo, password string, inputType uint32) (bool, string, string, error) {
 	//inputType为判断输入用户信息为电话或者邮箱，如果为电话，值为1，如果为邮箱，值为2
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	if inputType == 1 {
 		//从DB找对应的用户信息
 		user := module.User{}
@@ -218,7 +218,7 @@ func DriverRegister(json map[string]interface{}) error {
 	driver.CarType = carTypeToFloat64(json["carType"].(string))
 	driver.StatusNow = constant.DRIVER_READY
 	//解析后准备注册
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	if result := db.Create(&driver); result.Error != nil {
 		logger.ZapLogger.Sugar().Errorf("Create Driver Failed Err: %+v ", result.Error)
 		return errors.Wrap(errorInfo.RegisterDriverInsertDBWrong, "Create Driver Failed")
@@ -259,7 +259,7 @@ func carTypeToFloat64(input string) float64 {
 func GetAllReadyDriver() []module.Driver {
 	//获取所有Read状态的司机
 	drivers := make([]module.Driver, 0)
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	db.Where("status_now = ?", constant.DRIVER_READY).Find(drivers)
 	return drivers
 }
@@ -268,7 +268,7 @@ func GetAllReadyDriver() []module.Driver {
 func GetAllTypeOneDriver() []module.Driver {
 	//获取所有Read状态的小轿车司机
 	drivers := make([]module.Driver, 0)
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.SMALL_CAR).Find(&drivers)
 	return drivers
 }
@@ -277,7 +277,7 @@ func GetAllTypeOneDriver() []module.Driver {
 func GetAllTypeTwoDriver() []module.Driver {
 	//获取所有Read状态的别克商务司机
 	drivers := make([]module.Driver, 0)
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.SUV).Find(&drivers)
 	return drivers
 }
@@ -286,7 +286,7 @@ func GetAllTypeTwoDriver() []module.Driver {
 func GetAllTypeThreeDriver() []module.Driver {
 	//获取所有Read状态的考斯特司机
 	drivers := make([]module.Driver, 0)
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.COASTER).Find(&drivers)
 	return drivers
 }
@@ -295,20 +295,20 @@ func GetAllTypeThreeDriver() []module.Driver {
 func GetAllTypeFourDriver() []module.Driver {
 	//获取所有Read状态的大巴车司机
 	drivers := make([]module.Driver, 0)
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	db.Where("status_now = ? AND car_type = ?", constant.DRIVER_READY, constant.BUS).Find(&drivers)
 	return drivers
 }
 
 // UpdateDriverType 更新司机的状态
 func UpdateDriverType(uuid string, carStatus int) {
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	db.Model(&module.Driver{}).Where("u_uid = ?", uuid).Update("status_now", carStatus)
 }
 
 // GetUserInfoByPhoneNumber  通过电话号码获取用户信息
 func GetUserInfoByPhoneNumber(phoneNumber string) module.User {
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	//phone_number加密
 	aesPhoneNumber, err := encrypt.AesEncrypt(phoneNumber)
 	if err != nil {

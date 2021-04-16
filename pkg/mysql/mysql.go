@@ -1,13 +1,14 @@
-package mysql
+package sql
 
 import (
 	"IntelligentTransfer/config"
 	log "IntelligentTransfer/pkg/logger"
+	"sync"
+
 	"gorm.io/driver/mysql"
 	_ "gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"sync"
 )
 
 var db *gorm.DB

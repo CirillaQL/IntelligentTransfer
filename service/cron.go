@@ -4,7 +4,7 @@ import (
 	"IntelligentTransfer/constant"
 	"IntelligentTransfer/module"
 	"IntelligentTransfer/pkg/logger"
-	"IntelligentTransfer/pkg/mysql"
+	sql "IntelligentTransfer/pkg/mysql"
 	"fmt"
 	"time"
 
@@ -31,7 +31,7 @@ func StartCron() {
 
 // CreateTable 生成以日期为TableName的数据库表
 func CreateTable() {
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	var result []module.Meeting
 	db.Where("if_solve = ?", 0).Find(&result)
 	ans := getDateMap(&result)
@@ -99,7 +99,7 @@ func getToday() string {
 
 // GetTodayPickInfoByOrder 按照时间从表中获取数据，进行排序，目前获取数据仅仅为获取到当天的数据，其他之后时间段的暂时并不需要
 func GetTodayPickInfoByOrder() {
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	if db.Migrator().HasTable("2021-04-08") {
 		go dueTodayPick("2021-04-08")
 		go dueTodaySent("2021-04-08")
@@ -110,7 +110,7 @@ func GetTodayPickInfoByOrder() {
 //封装获取到的接站信息
 func dueTodayPick(tableName string) {
 	smartMeetingPick := make([]module.SmartMeeting, 0)
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	//此处获取的为接站
 	db.Table(tableName).Order("pick_time").Where("pick_or_sent = ? AND driver_u_uid = ?", 1, "").Find(&smartMeetingPick)
 	if len(smartMeetingPick) == 0 {
@@ -134,7 +134,7 @@ func dueTodayPick(tableName string) {
 
 func dueTodaySent(tableName string) {
 	smartMeetingSent := make([]module.SmartMeeting, 0)
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	//此时获取的为送站
 	db.Table(tableName).Order("sent_time").Where("pick_or_sent = ? AND driver_u_uid = ?", 0, "").Find(&smartMeetingSent)
 	if len(smartMeetingSent) == 0 {
@@ -222,7 +222,7 @@ func assignmentDrivers(users map[string][]module.SmartMeeting) *map[string][]mod
 
 // 分配司机后，将分配后的司机状态更新到DB中
 func updateDriverInfoToDB(tableName, smartMeetingUUid, driverUUid string) error {
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	if err := db.Table(tableName).Where("u_uid = ?", smartMeetingUUid).Update("driver_u_uid", driverUUid).Error; err != nil {
 		logger.ZapLogger.Sugar().Errorf("SmartMeeting: %+v Update Driver Failed. Err: %+v", smartMeetingUUid, err)
 		return err

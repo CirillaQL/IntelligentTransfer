@@ -4,7 +4,7 @@ import (
 	"IntelligentTransfer/module"
 	"IntelligentTransfer/pkg/encrypt"
 	"IntelligentTransfer/pkg/logger"
-	"IntelligentTransfer/pkg/mysql"
+	sql "IntelligentTransfer/pkg/mysql"
 	"fmt"
 	"strconv"
 	"sync"
@@ -57,7 +57,7 @@ func GetMeeting(SheetName, fileName string, errorChannel chan error, wg *sync.Wa
 	}
 	meetingList := getMeetingsInfo(rows, SheetName)
 	fmt.Println(meetingList)
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	if db.Migrator().HasTable("meetings") {
 		db.Table("meetings").Create(&meetingList)
 	} else {
@@ -110,7 +110,7 @@ func getMeetingsInfo(rows [][]string, meetingName string) []module.Meeting {
 // GetMeetingExcel 从DB-meetings中读取数据保存到本地
 func GetMeetingExcel(tableName, meetingUUid string) (string, error) {
 	//根据表名获取对应的信息
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	//首先获取接站的排序后信息
 	var pickInfo []module.SmartMeeting
 	db.Table(tableName).Order("pick_time").Where("meeting_u_uid = ? AND pick_or_sent = ?", meetingUUid, 1).Find(&pickInfo)
@@ -198,7 +198,7 @@ func assembleCellString(alpha string, number int) string {
 
 // 根据司机uuid获取司机信息
 func getDriverInfo(driverUUid string) string {
-	db := mysql.GetDB()
+	db := sql.GetDB()
 	var driverName string
 	db.Raw("select users.user_name from users inner join drivers on users.uuid ="+
 		" drivers.user_u_uid where drivers.u_uid = ?", driverUUid).Scan(&driverName)
