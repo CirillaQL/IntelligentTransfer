@@ -10,4 +10,6 @@ var (
 	RegisterDriverInsertDBWrong = errors.New("Register Driver insert db wrong ")
 
 	TableDoesNotExist = errors.New("Table is not exist ")
+
+	GRPCServiceError = errors.New("gRPC Service Failed ")
 )

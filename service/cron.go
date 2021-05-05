@@ -2,6 +2,7 @@ package service
 
 import (
 	"IntelligentTransfer/constant"
+	errorInfo "IntelligentTransfer/error"
 	"IntelligentTransfer/module"
 	"IntelligentTransfer/pkg/logger"
 	sql "IntelligentTransfer/pkg/mysql"
@@ -24,7 +25,8 @@ func StartCron() {
 	logger.ZapLogger.Sugar().Info("Start Cron service success")
 	c.AddFunc("@every 10s", CreateTable)
 	c.AddFunc("@every 10s", GetTodayPickInfoByOrder)
-	//c.AddFunc("@every 10s", GeneOrder)
+
+	//c.AddFunc("@every 1m", testUpdate)
 	c.Start()
 	select {}
 }
@@ -100,11 +102,11 @@ func getToday() string {
 // GetTodayPickInfoByOrder 按照时间从表中获取数据，进行排序，目前获取数据仅仅为获取到当天的数据，其他之后时间段的暂时并不需要
 func GetTodayPickInfoByOrder() {
 	db := sql.GetDB()
-	if db.Migrator().HasTable("2021-04-08") {
-		go dueTodayPick("2021-04-08")
-		go dueTodaySent("2021-04-08")
+	if db.Migrator().HasTable("2021-04-17") {
+		go dueTodayPick("2021-04-17")
+		go dueTodaySent("2021-04-17")
 	}
-	go GeneOrder("2021-04-08")
+	go GeneOrder("2021-04-17")
 }
 
 //封装获取到的接站信息
@@ -117,7 +119,7 @@ func dueTodayPick(tableName string) {
 		return
 	}
 	//获取到按照时间进行了排序的接站信息表
-	pickTimeMap := createSentTimeMap(smartMeetingPick)
+	pickTimeMap := createPickTimeMap(smartMeetingPick)
 	pickResult := assignmentDrivers(*pickTimeMap)
 	for _, value := range *pickResult {
 		for _, v := range value {
@@ -149,8 +151,9 @@ func dueTodaySent(tableName string) {
 				logger.ZapLogger.Sugar().Infof("user: %+v has Driver: %+v", v.UserName, v.DriverUUid)
 				_ = updateDriverInfoToDB(tableName, v.UUid, v.DriverUUid)
 			} else {
-				logger.ZapLogger.Sugar().Infof("user: %+v doesn't have driver! ", v.UserName)
+				//logger.ZapLogger.Sugar().Infof("user: %+v doesn't have driver! ", v.UserName)
 				// TODO:后续会给会议组织者进行提醒
+				continue
 			}
 		}
 	}
@@ -520,4 +523,81 @@ func partitionMeeting(meeting *module.Meeting) []module.Meeting {
 	result = append(result, meetingFrom)
 	fmt.Println(result)
 	return result
+}
+
+//封装执行更新航班信息函数
+func testUpdate() {
+	UpdateShiftInfo("2021-04-17")
+}
+
+// UpdateShiftInfo 更新用户航班信息
+func UpdateShiftInfo(tableName string) {
+	//此时tableName为航班对应的日期值
+	db := sql.GetDB()
+	var pickUsers []module.SmartMeeting
+	var sentUsers []module.SmartMeeting
+	db.Table(tableName).Order("pick_time").Where("pick_or_sent = ?", 1).Find(&pickUsers)
+	db.Table(tableName).Order("sent_time").Where("pick_or_sent = ?", 0).Find(&sentUsers)
+	fmt.Println("此时获取的pickUser: ", pickUsers)
+	fmt.Println("此时获取的sentUser: ", sentUsers)
+	go updatePickShiftTime(pickUsers, tableName)
+	go updateSentShiftTime(sentUsers, tableName)
+}
+
+//比较DB中的时间是否和gRPC调用获取的接口时间一致
+func compareShiftTime(originalTime, tableName, Shift string, pickOrSent uint32) (error, bool, string) {
+	//调用gRPC获取航班信息
+	takeOffTime, landingTime := GetShiftInfo(Shift, tableName)
+	if takeOffTime == "" || landingTime == "" {
+		logger.ZapLogger.Sugar().Errorf("Table: %+v Shift: %+v do grpc failed. ", tableName, Shift)
+		return errorInfo.GRPCServiceError, false, ""
+	}
+	if pickOrSent == 1 {
+		//此时为接站
+		if landingTime == originalTime {
+			return nil, true, ""
+		} else {
+			return nil, false, landingTime
+		}
+	} else {
+		//此时为送站
+		if takeOffTime == originalTime {
+			return nil, true, ""
+		} else {
+			return nil, false, takeOffTime
+		}
+	}
+}
+
+// goroutine协程处理时间更新
+func updatePickShiftTime(pickTime []module.SmartMeeting, tableName string) {
+	if len(pickTime) == 0 {
+		return
+	}
+	for _, pick := range pickTime {
+		err, result, realTime := compareShiftTime(pick.PickTime, tableName, pick.Shift, 1)
+		if err != nil || result == true {
+			continue
+		} else {
+			db := sql.GetDB()
+			db.Table("orders").Where("start_date = ? AND start_time = ?", tableName, pick.PickTime).Update("start_time", realTime)
+			db.Table(tableName).Where("u_uid = ?", pick.UUid).Update("pick_time", realTime)
+		}
+	}
+}
+
+func updateSentShiftTime(sentTime []module.SmartMeeting, tableName string) {
+	if len(sentTime) == 0 {
+		return
+	}
+	for _, sent := range sentTime {
+		err, result, realTime := compareShiftTime(sent.PickTime, tableName, sent.Shift, 1)
+		if err != nil || result == true {
+			continue
+		} else {
+			db := sql.GetDB()
+			db.Table("orders").Where("start_date = ? AND start_time = ?", tableName, sent.SentTime).Update("start_time", realTime)
+			db.Table(tableName).Where("u_uid = ?", sent.UUid).Update("sent_time", realTime)
+		}
+	}
 }

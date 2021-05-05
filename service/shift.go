@@ -5,8 +5,8 @@ package service
 
 //爬虫获取航班信息
 import (
+	"IntelligentTransfer/pkg/logger"
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -19,7 +19,8 @@ const (
 	address = "localhost:50051"
 )
 
-func GetShiftInfo(shift, date string) {
+// GetShiftInfo gRPC接口，用于与python的航班信息爬虫进行交互
+func GetShiftInfo(shift, date string) (string, string) {
 	//建立链接
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 
@@ -31,14 +32,19 @@ func GetShiftInfo(shift, date string) {
 
 	Client := pb.NewGetShiftServiceClient(conn)
 
-	// 设定请求超时时间 6s
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*6)
+	// 设定请求超时时间 8s
+	context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	// UserIndex 请求
-	Reponse, err := Client.GetShift(ctx, &pb.GetShiftReq{
+	//获取请求
+	response, err := Client.GetShift(ctx, &pb.GetShiftReq{
 		ShiftNumber: shift,
 		Date:        date,
 	})
-	fmt.Println(Reponse)
+	if err != nil || response == nil {
+		logger.ZapLogger.Sugar().Errorf("gRPC service failed. err: %+v ", err)
+		return "", ""
+	}
+	return response.TakeoffTime, response.LandingTime
 }

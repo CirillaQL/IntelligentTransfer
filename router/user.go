@@ -1,6 +1,7 @@
 package router
 
 import (
+	"IntelligentTransfer/pkg/encrypt"
 	"IntelligentTransfer/pkg/logger"
 	"IntelligentTransfer/pkg/redis"
 	"IntelligentTransfer/pkg/token"
@@ -10,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//注册路由
+// Register 注册路由
 func Register(context *gin.Context) {
 	json := make(map[string]interface{})
 	_ = context.BindJSON(&json)
@@ -33,7 +34,7 @@ func Register(context *gin.Context) {
 	}
 }
 
-//登录路由
+// Login 登录路由
 func Login(context *gin.Context) {
 	json := make(map[string]interface{})
 	_ = context.Bind(&json)
@@ -43,7 +44,12 @@ func Login(context *gin.Context) {
 		logger.ZapLogger.Sugar().Errorf("user login failed err:%+v, result:%+v", err, result)
 		context.JSON(http.StatusOK, gin.H{"msg": "登录失败"})
 	} else {
-		logger.ZapLogger.Sugar().Info("user login success")
+		phone, err := encrypt.AesDecrypt(phoneNumber)
+		if err != nil {
+			logger.ZapLogger.Sugar().Infof("phoneNumber: %+v decrypt failed err: %+v", phoneNumber, err)
+			context.JSON(http.StatusOK, gin.H{"msg": "登录失败"})
+		}
+		logger.ZapLogger.Sugar().Infof("user %+v login success", phone)
 		tokenString, err := token.GenToken(userId, phoneNumber)
 		if err != nil {
 			logger.ZapLogger.Sugar().Errorf("User: %+v genToken Failed. Err: %+v", userId, err)
@@ -71,6 +77,7 @@ func loginJson(json map[string]interface{}) (string, string, uint32) {
 	}
 }
 
+// RegisterDriver 司机注册路由服务
 func RegisterDriver(context *gin.Context) {
 	json := make(map[string]interface{})
 	_ = context.BindJSON(&json)

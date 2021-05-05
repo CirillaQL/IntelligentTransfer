@@ -95,3 +95,12 @@ func DriverCancelOrder(uuid string) {
 	//更新smartmeeting表中，所有对应的司机id
 	db.Table(getToday()).Where("driver_u_uid = ?", uuid).Update("driver_u_uid", "")
 }
+
+// GetOrders 获取该用户的所用订单
+func GetOrders(userPhone string) []module.Order {
+	//从Order表中获取所有用户id的订单
+	db := sql.GetDB()
+	var orderList []module.Order
+	db.Table("orders").Where("user_phone = ?", userPhone).Find(&orderList)
+	return orderList
+}
