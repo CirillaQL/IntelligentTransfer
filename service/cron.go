@@ -102,11 +102,11 @@ func getToday() string {
 // GetTodayPickInfoByOrder 按照时间从表中获取数据，进行排序，目前获取数据仅仅为获取到当天的数据，其他之后时间段的暂时并不需要
 func GetTodayPickInfoByOrder() {
 	db := sql.GetDB()
-	if db.Migrator().HasTable("2021-04-17") {
-		go dueTodayPick("2021-04-17")
-		go dueTodaySent("2021-04-17")
+	if db.Migrator().HasTable("2021-05-14") {
+		go dueTodayPick("2021-05-14")
+		go dueTodaySent("2021-05-14")
 	}
-	go GeneOrder("2021-04-17")
+	go GeneOrder("2021-05-14")
 }
 
 //封装获取到的接站信息
@@ -127,13 +127,15 @@ func dueTodayPick(tableName string) {
 				logger.ZapLogger.Sugar().Infof("user: %+v has Driver: %+v", v.UserName, v.DriverUUid)
 				_ = updateDriverInfoToDB(tableName, v.UUid, v.DriverUUid)
 			} else {
-				logger.ZapLogger.Sugar().Infof("user: %+v doesn't have driver! ", v.UserName)
+				//logger.ZapLogger.Sugar().Infof("user: %+v doesn't have driver! ", v.UserName)
 				// TODO:后续会给会议组织者进行提醒
+				continue
 			}
 		}
 	}
 }
 
+//封装获取到的送站信息
 func dueTodaySent(tableName string) {
 	smartMeetingSent := make([]module.SmartMeeting, 0)
 	db := sql.GetDB()
@@ -526,7 +528,7 @@ func partitionMeeting(meeting *module.Meeting) []module.Meeting {
 }
 
 //封装执行更新航班信息函数
-func testUpdate() {
+func UpdateShift() {
 	UpdateShiftInfo("2021-04-17")
 }
 
@@ -591,7 +593,7 @@ func updateSentShiftTime(sentTime []module.SmartMeeting, tableName string) {
 		return
 	}
 	for _, sent := range sentTime {
-		err, result, realTime := compareShiftTime(sent.PickTime, tableName, sent.Shift, 1)
+		err, result, realTime := compareShiftTime(sent.PickTime, tableName, sent.Shift, 0)
 		if err != nil || result == true {
 			continue
 		} else {

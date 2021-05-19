@@ -217,8 +217,10 @@ func DriverRegister(json map[string]interface{}) error {
 	driver.CarNumber = json["carNumber"].(string)
 	driver.CarType = carTypeToFloat64(json["carType"].(string))
 	driver.StatusNow = constant.DRIVER_READY
-	//解析后准备注册
+
 	db := sql.GetDB()
+	//解析后准备注册
+
 	if result := db.Create(&driver); result.Error != nil {
 		logger.ZapLogger.Sugar().Errorf("Create Driver Failed Err: %+v ", result.Error)
 		return errors.Wrap(errorInfo.RegisterDriverInsertDBWrong, "Create Driver Failed")

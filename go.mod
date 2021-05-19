@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/360EntSecGroup-Skylar/excelize/v2 v2.3.2
+	github.com/DeanThompson/ginpprof v0.0.0-20201112072838-007b1e56b2e1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.6.3
 	github.com/golang/protobuf v1.5.2 // indirect

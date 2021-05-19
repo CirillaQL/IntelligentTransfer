@@ -39,6 +39,9 @@ func ParseToken(tokenString string) (*MyClaims, error) {
 		}
 		return MySecret, nil
 	})
+	if token == nil {
+		return nil, err
+	}
 	if claims, ok := token.Claims.(*MyClaims); ok && token.Valid {
 		return claims, nil
 	} else {

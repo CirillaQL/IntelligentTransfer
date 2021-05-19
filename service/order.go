@@ -1,7 +1,7 @@
 package service
 
 import (
-	errorInfo "IntelligentTransfer/error"
+	"IntelligentTransfer/constant"
 	"IntelligentTransfer/module"
 	"IntelligentTransfer/pkg/logger"
 	sql "IntelligentTransfer/pkg/mysql"
@@ -74,16 +74,21 @@ func updateUserOrder(tableName, uuid string) {
 }
 
 // CancelUserOrder 用户主动取消订单,通过传入的信息来定位到对应的用户接送站信息
-func CancelUserOrder(tableName, userPhone string, pickOrSent uint32) error {
-	//首先根据tableName与userPhone定位到对应的用户信息，使用pickOrSent确定为接站还是送站
+func CancelUserOrder(uuid string) error {
 	db := sql.GetDB()
-	//存在性校验
-	if db.Migrator().HasTable(tableName) == false {
-		logger.ZapLogger.Sugar().Errorf("User:%+v cancel order Error. Table doesn't exist", userPhone)
-		return errorInfo.TableDoesNotExist
+	var order module.Order
+	db.Table("orders").Where("uuid = ?", uuid).Find(&order)
+	db.Table("orders").Where("uuid = ?", uuid).Delete(&order)
+	logger.ZapLogger.Sugar().Infof("Orderinfo:%+v", order)
+	//更新SmartMeeting表中信息
+	db.Table(order.StartDate).Where("uuid = ?", uuid).Update("if_order", 0)
+	//更新司机信息
+	var drivers []module.Order
+	db.Table("orders").Where("driver_uuid = ?", order.DriverUUid).Find(&drivers)
+	if len(drivers) == 0 {
+		//此时没有这个司机的订单
+		UpdateDriverType(order.DriverUUid, constant.DRIVER_READY)
 	}
-	//更新接送的司机信息
-	db.Table(tableName).Where("user_phone = ? ")
 	return nil
 }
 

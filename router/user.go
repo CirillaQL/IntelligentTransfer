@@ -39,6 +39,7 @@ func Login(context *gin.Context) {
 	json := make(map[string]interface{})
 	_ = context.Bind(&json)
 	userInfo, password, inputType := loginJson(json)
+	logger.ZapLogger.Sugar().Info(userInfo, password, inputType)
 	result, userId, phoneNumber, err := service.LoginWithPassword(userInfo, password, inputType)
 	if err != nil || result == false {
 		logger.ZapLogger.Sugar().Errorf("user login failed err:%+v, result:%+v", err, result)
@@ -87,4 +88,29 @@ func RegisterDriver(context *gin.Context) {
 		context.JSON(http.StatusOK, gin.H{"msg": "注册失败"})
 	}
 	context.JSON(http.StatusOK, gin.H{"msg": "注册成功"})
+}
+
+// CheckUserMeetingInfo 获取用户所在会议的会议信息
+func CheckUserMeetingInfo(context *gin.Context) {
+	userId := context.Param("id")
+	json := make(map[string]interface{})
+	_ = context.BindJSON(&json)
+	if json["meetingdate"] == nil {
+		context.JSON(http.StatusOK, gin.H{})
+	}
+	meetingInfos := service.GetMeetingInfo(userId, json["meetingdate"].(string))
+	context.IndentedJSON(http.StatusOK, meetingInfos)
+}
+
+// UpdateMeetingInfo 用户修改会议信息
+func UpdateMeetingInfo(context *gin.Context) {
+	userId := context.Param("id")
+	json := make(map[string]interface{})
+	err := context.BindJSON(&json)
+	if err != nil {
+		logger.ZapLogger.Sugar().Errorf("Json Bind Failed: %+v", err)
+		context.JSON(http.StatusOK, gin.H{})
+	}
+	err = service.UpdateMeeting(userId, json)
+	context.JSON(http.StatusOK, gin.H{"msg": "dsad"})
 }

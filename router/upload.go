@@ -4,20 +4,13 @@ import (
 	"IntelligentTransfer/pkg/logger"
 	"IntelligentTransfer/service"
 	"fmt"
+	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"path/filepath"
 )
 
 func Upload(c *gin.Context) {
-	//cookie, err := c.Cookie("token")
-	//if err != nil {
-	//	logger.ZapLogger.Sugar().Errorf("get User Cookie failed, err:%+v", err)
-	//	c.JSON(http.StatusOK, gin.H{"code": http.StatusBadRequest, "msg": fmt.Sprintf("error get form: %s",
-	//		err.Error())})
-	//	return
-	//}
-	//fmt.Println(cookie)
 	form, err := c.MultipartForm()
 	if err != nil {
 		logger.ZapLogger.Sugar().Errorf("get upload file failed. err: {%+v}", err)
@@ -45,4 +38,14 @@ func Upload(c *gin.Context) {
 		filenames = append(filenames, file.Filename)
 	}
 	c.JSON(http.StatusOK, gin.H{"code": http.StatusAccepted, "msg": "upload ok!", "data": gin.H{"files": filenames}})
+}
+
+func Download(c *gin.Context) {
+	fileName := c.Param("name")
+	file := "./storage/" + fileName + ".xlsx"
+	xlsx, _ := excelize.OpenFile(file)
+	c.Header("Content-Type", "application/octet-stream")
+	c.Header("Content-Disposition", "attachment; filename="+fileName)
+	c.Header("Content-Transfer-Encoding", "binary")
+	_ = xlsx.Write(c.Writer)
 }

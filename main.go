@@ -4,7 +4,7 @@ import (
 	"IntelligentTransfer/middleware"
 	"IntelligentTransfer/router"
 	"IntelligentTransfer/service"
-
+	_ "github.com/DeanThompson/ginpprof"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,8 +23,12 @@ func main() {
 	{
 		v1.POST("/:id/upload", router.Upload)
 		v1.POST("/:id/registerDriver", router.RegisterDriver)
+		v1.GET("/:id/getOrders", router.GetUserOrders)
+		v1.GET("/:id/deleteOrder/:orderId", router.CancelOrder)
+		v1.GET("/:id/getMeeting/:name", router.Download)
+		v1.POST("/:id/checkMeeting", router.CheckUserMeetingInfo)
+		v1.POST("/:id/updateMeeting", router.UpdateMeetingInfo)
 	}
-
 	_ = r.Run(":40000")
 
 }

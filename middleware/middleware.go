@@ -67,7 +67,8 @@ func Cookie() gin.HandlerFunc {
 		getToken, err := context.Cookie("token")
 		if err != nil {
 			logger.ZapLogger.Sugar().Errorf("middleware get token failed Err:%+v", err)
-			context.Abort()
+			context.Next()
+			return
 		}
 		value, err := redis.GetToken(getToken)
 		if err != nil {
@@ -75,14 +76,15 @@ func Cookie() gin.HandlerFunc {
 			context.Abort()
 		}
 		tokenClaim, err := token.ParseToken(getToken)
-		if err != nil {
+		if err != nil || tokenClaim == nil {
 			logger.ZapLogger.Sugar().Errorf("middleware parse token failed Err:%+v", err)
 			context.Abort()
-		}
-		if tokenClaim.UUid == value {
-			context.Next()
 		} else {
-			context.Abort()
+			if tokenClaim.UUid == value {
+				context.Next()
+			} else {
+				context.Abort()
+			}
 		}
 	}
 }

@@ -20,6 +20,8 @@ func OpenExcel(fileName string) []error {
 		logger.ZapLogger.Sugar().Errorf("Open Excel File{%+v} Failed, err:{%+v}", fileName, err)
 		errorList = append(errorList, err)
 		return errorList
+	} else {
+		logger.ZapLogger.Sugar().Debug("Open Excel " + fileName)
 	}
 	//获取会议名称：名称为Sheet表名
 	MeetingNames := excel.GetSheetList()
@@ -79,6 +81,7 @@ func getMeetingsInfo(rows [][]string, meetingName string) []module.Meeting {
 				break
 			} else {
 				MeetingInfo := module.Meeting{}
+				MeetingInfo.UUid = generateUUID()
 				MeetingInfo.MeetingUUid = uuid
 				MeetingInfo.MeetingName = meetingName
 				MeetingInfo.Name = meetingRow[0]
@@ -123,6 +126,7 @@ func GetMeetingExcel(tableName, meetingUUid string) (string, error) {
 	file.NewSheet("送站")
 	//设置表头
 	setSheetTitle(file)
+	savePickInfo(file, pickInfo)
 	saveSentInfo(file, sentInfo)
 	//保存接站信息
 	fileName := "./storage/" + tableName + ".xlsx"

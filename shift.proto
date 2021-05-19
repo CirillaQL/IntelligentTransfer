@@ -18,7 +18,7 @@ message GetShiftRsp{
     string landingTime = 4;
 }
 
-// 定义接口HelloService
+// 定义接口Service
 service GetShiftService {
     rpc GetShift (GetShiftReq) returns (GetShiftRsp);
 }

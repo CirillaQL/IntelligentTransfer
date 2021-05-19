@@ -23,20 +23,16 @@ const (
 func GetShiftInfo(shift, date string) (string, string) {
 	//建立链接
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
-
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-
 	defer conn.Close()
-
+	//创建gRPC客户段
 	Client := pb.NewGetShiftServiceClient(conn)
-
-	// 设定请求超时时间 8s
+	// 设定请求超时时间 10s
 	context.Background()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-
 	//获取请求
 	response, err := Client.GetShift(ctx, &pb.GetShiftReq{
 		ShiftNumber: shift,
