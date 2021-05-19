@@ -116,8 +116,3 @@ type ShiftInfo struct {
 	EndTime   string //降落时间
 	IfDelay   uint32 //是否延误
 }
-
-// MeetingToSmartMeeting 会议转化为智能会议信息
-func MeetingToSmartMeeting(meeting Meeting) SmartMeeting {
-	//根据信息将用户
-}

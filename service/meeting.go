@@ -42,12 +42,14 @@ func UpdateMeeting(userId string, json map[string]interface{}) error {
 	//删除原Meeting表信息
 	db.Table("meetings").Where("UUid = ?", meeting.UUid).Delete(&meeting)
 	//删除SmartMeeting表信息
-	logger.ZapLogger.Sugar().Infof("MeetingInfo: %+v", meeting)
-	//将meeting转化为smartMeeting
-	var smartMeeting module.SmartMeeting
-	smartMeeting.
-		db.Table(meeting.StartDate).Delete(&meeting)
-	db.Table(meeting.ReturnDate).Delete(&meeting)
+	//db.Exec("delete from ? where meeting_u_uid = ? and user_name = ? and user_phone_number = ?", meeting.StartDate,
+	//	meeting.MeetingUUid, meeting.Name, meeting.PhoneNumber)
+	//db.Exec("delete from ? where meeting_u_uid = ? and user_name = ? and user_phone_number = ?", meeting.ReturnDate,
+	//	meeting.MeetingUUid, meeting.Name, meeting.PhoneNumber)
+	db.Table(meeting.ReturnDate).Where("meeting_u_uid = ? and user_phone_number = ?", meeting.MeetingUUid,
+		meeting.PhoneNumber).Delete(module.SmartMeeting{})
+	db.Table(meeting.StartDate).Where("meeting_u_uid = ? and user_phone_number = ?", meeting.MeetingUUid,
+		meeting.PhoneNumber).Delete(module.SmartMeeting{})
 	//删除Order信息
 	var order module.Order
 	db.Table("orders").Where("user_phone = ? and user_name = ?", meeting.PhoneNumber,
