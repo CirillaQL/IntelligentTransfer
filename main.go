@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-	go service.StartCron()
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.Cors())
@@ -32,6 +31,7 @@ func main() {
 		v1.GET("/:id/getDriverOrder", router.GetDriverOrder)
 		v1.POST("/:id/updateDriverStatus", router.UpdateDriverStatus)
 	}
+	go service.StartCron()
 	_ = r.Run(":40000")
 
 }

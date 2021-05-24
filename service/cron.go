@@ -22,11 +22,19 @@ func init() {
 
 // StartCron 开启定时任务
 func StartCron() {
-	logger.ZapLogger.Sugar().Info("Start Cron service success")
-	c.AddFunc("@every 10s", CreateTable)
-	c.AddFunc("@every 10s", GetTodayPickInfoByOrder)
-
-	//c.AddFunc("@every 1m", testUpdate)
+	createTableId, err := c.AddFunc("@every 10s", CreateTable)
+	if err != nil {
+		logger.ZapLogger.Sugar().Infof("cron start createTable failed: %+v", err)
+	}
+	orderId, err := c.AddFunc("@every 10s", GetTodayPickInfoByOrder)
+	if err != nil {
+		logger.ZapLogger.Sugar().Infof("cron start genOrder failed: %+v", err)
+	}
+	updateID, err := c.AddFunc("@every 10s", UpdateShift)
+	if err != nil {
+		logger.ZapLogger.Sugar().Infof("cron start updateShift failed: %+v", err)
+	}
+	logger.ZapLogger.Sugar().Infof("start cron server success Ids: {%+v} {%+v} {%+v}", createTableId, orderId, updateID)
 	c.Start()
 	select {}
 }
@@ -101,12 +109,13 @@ func getToday() string {
 
 // GetTodayPickInfoByOrder 按照时间从表中获取数据，进行排序，目前获取数据仅仅为获取到当天的数据，其他之后时间段的暂时并不需要
 func GetTodayPickInfoByOrder() {
+	today := getToday()
 	db := sql.GetDB()
-	if db.Migrator().HasTable("2021-05-14") {
-		go dueTodayPick("2021-05-14")
-		go dueTodaySent("2021-05-14")
+	if db.Migrator().HasTable(today) {
+		go dueTodayPick(today)
+		go dueTodaySent(today)
 	}
-	go GeneOrder("2021-05-14")
+	go GeneOrder(today)
 }
 
 //封装获取到的接站信息
@@ -127,7 +136,6 @@ func dueTodayPick(tableName string) {
 				logger.ZapLogger.Sugar().Infof("user: %+v has Driver: %+v", v.UserName, v.DriverUUid)
 				_ = updateDriverInfoToDB(tableName, v.UUid, v.DriverUUid)
 			} else {
-				//logger.ZapLogger.Sugar().Infof("user: %+v doesn't have driver! ", v.UserName)
 				// TODO:后续会给会议组织者进行提醒
 				continue
 			}
@@ -153,7 +161,6 @@ func dueTodaySent(tableName string) {
 				logger.ZapLogger.Sugar().Infof("user: %+v has Driver: %+v", v.UserName, v.DriverUUid)
 				_ = updateDriverInfoToDB(tableName, v.UUid, v.DriverUUid)
 			} else {
-				//logger.ZapLogger.Sugar().Infof("user: %+v doesn't have driver! ", v.UserName)
 				// TODO:后续会给会议组织者进行提醒
 				continue
 			}
@@ -527,9 +534,10 @@ func partitionMeeting(meeting *module.Meeting) []module.Meeting {
 	return result
 }
 
-//封装执行更新航班信息函数
+// UpdateShift 封装执行更新航班信息函数
 func UpdateShift() {
-	UpdateShiftInfo("2021-04-17")
+	today := getToday()
+	UpdateShiftInfo(today)
 }
 
 // UpdateShiftInfo 更新用户航班信息
