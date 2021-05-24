@@ -117,9 +117,11 @@ func GetMeetingExcel(tableName, meetingUUid string) (string, error) {
 	//首先获取接站的排序后信息
 	var pickInfo []module.SmartMeeting
 	db.Table(tableName).Order("pick_time").Where("meeting_u_uid = ? AND pick_or_sent = ?", meetingUUid, 1).Find(&pickInfo)
+	logger.ZapLogger.Sugar().Info(pickInfo)
 	//获取送站的相关信息
 	var sentInfo []module.SmartMeeting
 	db.Table(tableName).Order("sent_time").Where("meeting_u_uid = ? AND pick_or_sent = ?", meetingUUid, 0).Find(&sentInfo)
+	logger.ZapLogger.Sugar().Info(sentInfo)
 	//首先打开文件，设置sheet名称
 	file := excelize.NewFile()
 	file.SetSheetName("Sheet1", "接站")

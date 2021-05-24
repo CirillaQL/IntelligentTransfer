@@ -7,6 +7,7 @@ import (
 	"IntelligentTransfer/pkg/token"
 	"IntelligentTransfer/service"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -112,5 +113,20 @@ func UpdateMeetingInfo(context *gin.Context) {
 		context.JSON(http.StatusOK, gin.H{})
 	}
 	err = service.UpdateMeeting(userId, json)
-	context.JSON(http.StatusOK, gin.H{"msg": "dsad"})
+	context.JSON(http.StatusOK, gin.H{"msg": "ok"})
+}
+
+// UpdateDriverStatus 更新司机状态
+func UpdateDriverStatus(context *gin.Context) {
+	userId := context.Param("id")
+	json := make(map[string]interface{})
+	err := context.BindJSON(&json)
+	if err != nil {
+		logger.ZapLogger.Sugar().Errorf("Json Bind Failed: %+v", err)
+		context.JSON(http.StatusOK, gin.H{})
+	}
+	driverStatus := json["status"].(string)
+	status, err := strconv.Atoi(driverStatus)
+	service.UpdateDriverType(userId, status)
+	context.JSON(http.StatusOK, gin.H{"msg": "ok"})
 }

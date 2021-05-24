@@ -28,6 +28,9 @@ func main() {
 		v1.GET("/:id/getMeeting/:name", router.Download)
 		v1.POST("/:id/checkMeeting", router.CheckUserMeetingInfo)
 		v1.POST("/:id/updateMeeting", router.UpdateMeetingInfo)
+		v1.POST("/:id/updateOrder", router.UpdateOrder)
+		v1.GET("/:id/getDriverOrder", router.GetDriverOrder)
+		v1.POST("/:id/updateDriverStatus", router.UpdateDriverStatus)
 	}
 	_ = r.Run(":40000")
 

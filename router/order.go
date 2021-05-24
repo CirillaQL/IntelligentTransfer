@@ -46,4 +46,24 @@ func CancelOrder(content *gin.Context) {
 	content.JSON(http.StatusOK, gin.H{"msg": "0"})
 }
 
-//
+// UpdateOrder 更新订单路由
+func UpdateOrder(context *gin.Context) {
+	json := make(map[string]interface{})
+	err := context.BindJSON(&json)
+	if err != nil {
+		logger.ZapLogger.Sugar().Errorf("Json Bind Failed: %+v", err)
+		context.JSON(http.StatusOK, gin.H{})
+	}
+	UUid := json["UUid"].(string)
+	UserName := json["UserName"].(string)
+	UserPhone := json["UserPhone"].(string)
+	_ = service.UpdateOrder(UUid, UserName, UserPhone)
+	context.JSON(http.StatusOK, gin.H{})
+}
+
+// GetDriverOrder 查找司机所有的订单
+func GetDriverOrder(context *gin.Context) {
+	id := context.Param("id")
+	orderList := service.GetDriverOrder(id)
+	context.IndentedJSON(http.StatusOK, orderList)
+}

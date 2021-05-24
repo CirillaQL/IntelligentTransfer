@@ -305,7 +305,11 @@ func GetAllTypeFourDriver() []module.Driver {
 // UpdateDriverType 更新司机的状态
 func UpdateDriverType(uuid string, carStatus int) {
 	db := sql.GetDB()
-	db.Model(&module.Driver{}).Where("u_uid = ?", uuid).Update("status_now", carStatus)
+	var driver module.Driver
+	db.Table("drivers").Where("user_u_uid = ?", uuid).Find(&driver)
+	logger.ZapLogger.Sugar().Infof("driverInfo %+v", driver)
+	result := db.Table("drivers").Where("u_uid = ?", driver.UUid).Update("status_now", carStatus)
+	logger.ZapLogger.Sugar().Infof("updateRow %+v", result.RowsAffected)
 }
 
 // GetUserInfoByPhoneNumber  通过电话号码获取用户信息

@@ -13,6 +13,9 @@ func GeneOrder(tableName string) {
 	var users []module.SmartMeeting
 	db := sql.GetDB()
 	db.Table(tableName).Where("if_order = ? AND driver_u_uid <> ?", 0, "").Find(&users)
+	if len(users) != 0 {
+		logger.ZapLogger.Sugar().Infof("find unOrder user: %+v", users)
+	}
 	for _, user := range users {
 		//每个人都有自己的一份订单
 		order := CreateOrder(user, tableName)
@@ -78,10 +81,16 @@ func CancelUserOrder(uuid string) error {
 	db := sql.GetDB()
 	var order module.Order
 	db.Table("orders").Where("uuid = ?", uuid).Find(&order)
-	db.Table("orders").Where("uuid = ?", uuid).Delete(&order)
+	deleteRow := db.Table("orders").Where("uuid = ?", uuid).Delete(&order)
+	logger.ZapLogger.Sugar().Infof("delete row: %+v", deleteRow.RowsAffected)
 	logger.ZapLogger.Sugar().Infof("Orderinfo:%+v", order)
 	//更新SmartMeeting表中信息
-	db.Table(order.StartDate).Where("uuid = ?", uuid).Update("if_order", 0)
+	//db.Table(order.StartDate).Where("user_name = ? and user_phone_number = ?", order.UserName, order.UserPhone).Update("if_order", 0)
+	var smart module.SmartMeeting
+	db.Table(order.StartDate).Where("user_name = ? and user_phone_number = ?", order.UserName, order.UserPhone).Find(&smart)
+	logger.ZapLogger.Sugar().Infof("smartMeeting info: %+v", smart)
+	result := db.Table(order.StartDate).Where("u_uid = ?", smart.UUid).Update("if_order", 0)
+	logger.ZapLogger.Sugar().Info(result.RowsAffected)
 	//更新司机信息
 	var drivers []module.Order
 	db.Table("orders").Where("driver_uuid = ?", order.DriverUUid).Find(&drivers)
@@ -92,15 +101,6 @@ func CancelUserOrder(uuid string) error {
 	return nil
 }
 
-// DriverCancelOrder 司机主动取消订单
-func DriverCancelOrder(uuid string) {
-	//在Order表中找到对应的数据，删除对应的数据
-	db := sql.GetDB()
-	db.Table("orders").Where("driver_u_uid = ?", uuid).Update("driver_u_uid", "")
-	//更新smartmeeting表中，所有对应的司机id
-	db.Table(getToday()).Where("driver_u_uid = ?", uuid).Update("driver_u_uid", "")
-}
-
 // GetOrders 获取该用户的所用订单
 func GetOrders(userPhone string) []module.Order {
 	//从Order表中获取所有用户id的订单
@@ -108,4 +108,24 @@ func GetOrders(userPhone string) []module.Order {
 	var orderList []module.Order
 	db.Table("orders").Where("user_phone = ?", userPhone).Find(&orderList)
 	return orderList
+}
+
+// UpdateOrder 更新用户订单信息
+func UpdateOrder(UUid, userName, userPhone string) error {
+	//根据UUid查找指定UUid的订单
+	db := sql.GetDB()
+	db.Table("orders").Where("uuid = ?", UUid).Update("user_name", userName).Update("user_phone", userPhone)
+	return nil
+}
+
+// GetDriverOrder 获取司机订单信息
+func GetDriverOrder(uuid string) []module.Order {
+	//首先根据用户的uuid查找司机的uuid
+	var driver module.Driver
+	db := sql.GetDB()
+	db.Table("drivers").Where("user_u_uid = ?", uuid).Find(&driver)
+	//此时找到了对应的司机uuid
+	var orders []module.Order
+	db.Table("orders").Where("driver_uuid = ?", driver.UUid).Find(&orders)
+	return orders
 }
