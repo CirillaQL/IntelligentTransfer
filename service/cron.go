@@ -548,8 +548,6 @@ func UpdateShiftInfo(tableName string) {
 	var sentUsers []module.SmartMeeting
 	db.Table(tableName).Order("pick_time").Where("pick_or_sent = ?", 1).Find(&pickUsers)
 	db.Table(tableName).Order("sent_time").Where("pick_or_sent = ?", 0).Find(&sentUsers)
-	fmt.Println("此时获取的pickUser: ", pickUsers)
-	fmt.Println("此时获取的sentUser: ", sentUsers)
 	go updatePickShiftTime(pickUsers, tableName)
 	go updateSentShiftTime(sentUsers, tableName)
 }
