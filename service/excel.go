@@ -112,6 +112,7 @@ func getMeetingsInfo(rows [][]string, meetingName string) []module.Meeting {
 
 // GetMeetingExcel 从DB-meetings中读取数据保存到本地
 func GetMeetingExcel(tableName, meetingUUid string) (string, error) {
+	logger.ZapLogger.Sugar().Infof("GetMeetingInfo tableName: [%+v]  meetingUUid:[%+v]", tableName, meetingUUid)
 	//根据表名获取对应的信息
 	db := sql.GetDB()
 	//首先获取接站的排序后信息
@@ -133,8 +134,7 @@ func GetMeetingExcel(tableName, meetingUUid string) (string, error) {
 	//保存接站信息
 	fileName := "./storage/" + tableName + ".xlsx"
 	if err := file.SaveAs(fileName); err != nil {
-		fmt.Println("save failed")
-		fmt.Println(err)
+		logger.ZapLogger.Sugar().Errorf("Save File Failed. Err:%+v", err)
 	}
 	return "", nil
 }
@@ -211,6 +211,9 @@ func getDriverInfo(driverUUid string) string {
 	var driverPhone string
 	db.Raw("select users.phone_number from users inner join drivers on users.uuid ="+
 		" drivers.user_u_uid where drivers.u_uid = ?", driverUUid).Scan(&driverPhone)
+	if len(driverPhone) == 0 {
+		return ""
+	}
 	realPhone, _ := encrypt.AesDecrypt(driverPhone)
 	return driverName + "-" + realPhone
 }

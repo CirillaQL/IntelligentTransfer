@@ -32,8 +32,8 @@ func GetMeetingInfo(userId, MeetingDate string) []module.Meeting {
 }
 
 // UpdateMeeting 更新会议信息
-func UpdateMeeting(userId string, json map[string]interface{}) error {
-	logger.ZapLogger.Sugar().Info(json)
+func UpdateMeeting(json map[string]interface{}) error {
+	logger.ZapLogger.Sugar().Infof("updateMeetingInfo %+v", json)
 	//定位到对应的Meeting信息
 	var meeting module.Meeting
 	db := sql.GetDB()

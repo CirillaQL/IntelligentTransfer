@@ -105,14 +105,16 @@ func CheckUserMeetingInfo(context *gin.Context) {
 
 // UpdateMeetingInfo 用户修改会议信息
 func UpdateMeetingInfo(context *gin.Context) {
-	userId := context.Param("id")
 	json := make(map[string]interface{})
 	err := context.BindJSON(&json)
 	if err != nil {
 		logger.ZapLogger.Sugar().Errorf("Json Bind Failed: %+v", err)
 		context.JSON(http.StatusOK, gin.H{})
 	}
-	err = service.UpdateMeeting(userId, json)
+	err = service.UpdateMeeting(json)
+	if err != nil {
+		context.JSON(http.StatusOK, gin.H{"msg": "no"})
+	}
 	context.JSON(http.StatusOK, gin.H{"msg": "ok"})
 }
 

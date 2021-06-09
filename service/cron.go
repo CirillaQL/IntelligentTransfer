@@ -34,7 +34,8 @@ func StartCron() {
 	if err != nil {
 		logger.ZapLogger.Sugar().Infof("cron start updateShift failed: %+v", err)
 	}
-	logger.ZapLogger.Sugar().Infof("start cron server success Ids: {%+v} {%+v} {%+v}", createTableId, orderId, updateID)
+	logger.ZapLogger.Sugar().Infof("start cron server success Ids: {%+v} {%+v} {%+v}", createTableId,
+		orderId, updateID)
 	c.Start()
 	select {}
 }

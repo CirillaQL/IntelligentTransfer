@@ -306,10 +306,10 @@ func GetAllTypeFourDriver() []module.Driver {
 func UpdateDriverType(uuid string, carStatus int) {
 	db := sql.GetDB()
 	var driver module.Driver
-	db.Table("drivers").Where("user_u_uid = ?", uuid).Find(&driver)
+	db.Table("drivers").Where("u_uid = ?", uuid).Find(&driver)
 	logger.ZapLogger.Sugar().Infof("driverInfo %+v", driver)
 	result := db.Table("drivers").Where("u_uid = ?", driver.UUid).Update("status_now", carStatus)
-	logger.ZapLogger.Sugar().Infof("updateRow %+v", result.RowsAffected)
+	logger.ZapLogger.Sugar().Infof("UpdateDriverStatus updateRow %+v", result.RowsAffected)
 }
 
 // GetUserInfoByPhoneNumber  通过电话号码获取用户信息

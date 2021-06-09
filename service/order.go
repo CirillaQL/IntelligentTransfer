@@ -5,6 +5,7 @@ import (
 	"IntelligentTransfer/module"
 	"IntelligentTransfer/pkg/logger"
 	sql "IntelligentTransfer/pkg/mysql"
+	"errors"
 )
 
 // GeneOrder 根据SmartMeeting-日期表生成对应的订单信息
@@ -96,7 +97,7 @@ func CancelUserOrder(uuid string) error {
 	db.Table("orders").Where("driver_uuid = ?", order.DriverUUid).Find(&drivers)
 	if len(drivers) == 0 {
 		//此时没有这个司机的订单
-		UpdateDriverType(order.DriverUUid, constant.DRIVER_READY)
+		UpdateDriverType(order.DriverUUid, constant.DRIVER_BUSY)
 	}
 	return nil
 }
@@ -114,6 +115,13 @@ func GetOrders(userPhone string) []module.Order {
 func UpdateOrder(UUid, userName, userPhone string) error {
 	//根据UUid查找指定UUid的订单
 	db := sql.GetDB()
+	var order module.Order
+	db.Table("orders").Where("uuid = ?", UUid).Find(&order)
+	if order.UUid == "" {
+		logger.ZapLogger.Sugar().Errorf("Can't find this Order")
+		err := errors.New("Can't find order")
+		return err
+	}
 	db.Table("orders").Where("uuid = ?", UUid).Update("user_name", userName).Update("user_phone", userPhone)
 	return nil
 }
